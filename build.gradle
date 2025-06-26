@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.qaware.mcp'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // mcp
+    implementation 'io.modelcontextprotocol.sdk:mcp:0.10.0'
+    implementation 'org.eclipse.jetty:jetty-server:12.0.22'
+    implementation 'org.eclipse.jetty.ee10:jetty-ee10-servlet:12.0.22'
+    
+	// json
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+        
+    // Logging
+    implementation 'org.slf4j:slf4j-simple:2.0.9'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+application {
+    mainClass = 'com.qaware.mcp.Server'
+}
+
+jar {
+    archiveBaseName = 'mcp-server-kickstart'
+    manifest {
+        attributes 'Main-Class': application.mainClass.get()
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
