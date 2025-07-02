@@ -63,7 +63,7 @@ public class Server {
 ./gradlew run
 ```
 
-Your MCP server will be available at http://localhost:8090
+Your MCP server will be available at http://localhost:8090/sse
 
 ### Debugging
 
