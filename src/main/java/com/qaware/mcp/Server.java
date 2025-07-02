@@ -8,12 +8,12 @@ public class Server {
         McpServer.create()
             .serverInfo("Hello World MCP Server", "1.0.0")
             .port(8090)
-            .addTool(new HelloWorldTool())
+            .addTool(new HelloWorldTools())
             .start();
     }
 
 
-    public static class HelloWorldTool {
+    public static class HelloWorldTools {
 
         @McpTool("Says hello to someone")
         public String hello(@McpParam(name = "name", description = "Name to greet") String name) {
