@@ -5,11 +5,7 @@ import java.util.List;
 public class Server {
 
     public static void main(String[] args) throws Exception {
-        McpServer.create()
-            .serverInfo("Hello World MCP Server", "1.0.0")
-            .port(8090)
-            .addTool(new HelloWorldTools())
-            .start();
+        McpServer.create().addTool(new HelloWorldTools()).start();
     }
 
 
@@ -37,6 +33,7 @@ public class Server {
                 default -> List.of("Item1", "Item2", "Item3");
             };
         }
+
     }
 
 }

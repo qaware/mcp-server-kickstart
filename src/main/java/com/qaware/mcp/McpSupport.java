@@ -31,7 +31,7 @@ enum McpSupport {
         log.info("Creating MCP servlet '{}' v{}", serverName, serverVersion);
 
         HttpServletSseServerTransportProvider transportProvider = new HttpServletSseServerTransportProvider(
-            new ObjectMapper(), "/", "/sse");
+            new ObjectMapper(), "/");
 
         McpSyncServer mcpSyncServer = io.modelcontextprotocol.server.McpServer.sync(transportProvider)
             .serverInfo(serverName, serverVersion)
@@ -59,12 +59,16 @@ enum McpSupport {
 
 
     private static SyncToolSpecification newSyncToolSpecification(Object instance, Method method, McpTool mcpDesc) {
-        return new SyncToolSpecification(
-            new Tool(
-                method.getName(),
-                mcpDesc.value(),
-                newInputSchema(method)),
-                (mcpSyncServerExchange, parameters) -> invoke(instance, method, parameters));
+        Tool tool = Tool.builder()
+            .name(method.getName())
+            .description(mcpDesc.value())
+            .inputSchema(newInputSchema(method))
+            .build();
+
+        return SyncToolSpecification.builder()
+            .tool(tool)
+            .callHandler((mcpSyncServerExchange, parameters) -> invoke(instance, method, parameters.arguments()))
+            .build();
     }
 
 
@@ -94,29 +98,36 @@ enum McpSupport {
         }
 
         return Json.toJson(Map.of(
-                "type", "object",
+                "type"      , "object",
                 "properties", paramToInfo,
-                "required", paramToInfo.keySet()
+                "required"  , paramToInfo.keySet()
             ));
     }
 
 
+    @SuppressWarnings("java:S1181")
     private static CallToolResult invoke(Object instance, Method method, Map<String, Object> parameters) {
-        Object result;
-
         try {
-            result = Reflection.invokeMethod(method, instance, parameters);
+            Object result = Reflection.invokeMethod(method, instance, parameters);
+            return newCallResult(result);
 
-        } catch (Exception exception) {
-            result = exception;
+        } catch (Throwable throwable) {
+            log.error("Call failed: " + method.getName() + " " + parameters, throwable);
+
+            while (throwable.getCause() != null) throwable = throwable.getCause();
+
+            return newCallResult(throwable);
         }
-
-        return newCallResult(result);
     }
 
 
     private static CallToolResult newCallResult(Object result) {
         Builder builder = CallToolResult.builder();
+
+        if (result instanceof Throwable throwable) {
+            builder.isError(true);
+            result = throwable.toString();
+        }
 
         if (result instanceof Iterable<?> iterable) {
             for (Object object : iterable) addTextContent(builder, object);
@@ -124,12 +135,12 @@ enum McpSupport {
             addTextContent(builder, result);
         }
 
-        return builder.isError(result instanceof Exception).build();
+        return builder.build();
     }
 
 
     private static void addTextContent(Builder builder, Object result) {
-        builder.addTextContent(Json.toJson(result));
+        builder.addTextContent(result instanceof String string ? string : Json.toJson(result));
     }
 
 }
