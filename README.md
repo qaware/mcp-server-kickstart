@@ -111,7 +111,7 @@ Exceptions are automatically caught and returned as error responses
 
 ### Codeium (KiloCode) ✅ Tested
 
-Add this to your KiloCode MCP configuration:
+Add this to your KiloCode MCP configuration (you need to use SSE!):
 
 ```json
 {
@@ -125,6 +125,30 @@ Add this to your KiloCode MCP configuration:
       "disabled": false
     }
   }
+}
+```
+
+### IntelliJ ✅ Tested
+
+Location:
+
+* macOS: ~/Library/Application Support/github-copilot/intellij/mcp.json
+* Windows: %APPDATA%\AppData\Local\github-copilot\intellij\mcp.json
+
+Configuration:
+
+```json
+{
+    "servers": {
+        "my-local-server": {
+            "url": "http://localhost:8090/mcp",
+            "requestInit": {
+                "headers": {
+                    "Authorization": "Bearer XYZ!"
+                }
+            }
+        }
+    }
 }
 ```
 
@@ -207,7 +231,7 @@ public class DataTools {
     
     @McpTool("Filters a list of numbers")
     public List<Integer> filterNumbers(@McpParam(name = "numbers") List<Integer> numbers,
-                                      @McpParam(name = "threshold") int threshold) {
+                                       @McpParam(name = "threshold") int threshold) {
         return numbers.stream()
                      .filter(n -> n > threshold)
                      .collect(Collectors.toList());
