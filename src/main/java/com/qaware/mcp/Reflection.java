@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 enum Reflection {
 
-    ; // darfst immer noch heulen 🤪
+    ;
 
 
     public static Class<?> getInnerType(Parameter param) { // meeeh!!!
@@ -117,7 +117,7 @@ enum Reflection {
 
 
     private static Method[] sort(Method[] methods) {
-        Arrays.sort(methods, (m1, m2) -> m1.getName().compareTo(m2.getName()));
+        Arrays.sort(methods, Comparator.comparing(Method::getName));
         return methods;
     }
 
