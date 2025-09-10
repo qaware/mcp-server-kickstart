@@ -65,8 +65,7 @@ public class Server {
 
 Your MCP server will be available at http://localhost:8090/mcp
 
-
-If you want to expose a different tool(s), use
+If you want to expose different tool(s), use
 
 ```
 ./gradlew run --args com.qaware.mcp.tools.McpSourceTool
