@@ -63,7 +63,16 @@ public class Server {
 ./gradlew run
 ```
 
-Your MCP server will be available at http://localhost:8090/sse
+Your MCP server will be available at http://localhost:8090/mcp
+
+
+If you want to expose a different tool(s), use
+
+```
+./gradlew run --args com.qaware.mcp.tools.McpSourceTool
+```
+
+You can provide multiple class names.
 
 ### Debugging
 
@@ -242,7 +251,7 @@ public class DataTools {
 ## Building Fat JAR
 
 ```
-./gradlew jar
+./gradlew fatJar
 java -jar build/libs/mcp-server-kickstart-1.0.0.jar
 ```
 

@@ -5,9 +5,20 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@SuppressWarnings({"java:S112", "java:S1193"})
 enum Reflection {
 
     ;
+
+
+    public static Object newInstance(String className, Object... initArgs) {
+        try {
+            return Class.forName(className).getDeclaredConstructor().newInstance(initArgs);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 
     public static Class<?> getInnerType(Parameter param) { // meeeh!!!
@@ -24,8 +35,6 @@ enum Reflection {
 
         throw new UnsupportedOperationException("Cannot determine inner type for: " + param.getType() + " (parameter: " + param.getName() + ")");
     }
-
-
 
 
     /**
