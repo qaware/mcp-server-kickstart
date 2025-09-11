@@ -5,6 +5,8 @@ import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult.Builder;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
+import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,11 +33,13 @@ enum McpTools {
     private static final Logger LOGGER = LoggerFactory.getLogger(McpTools.class);
 
 
+    static Tool getTool(Method method, McpTool mcpTool) {
+        String value = mcpTool.value();
 
-    static Tool getTool(Method method, McpTool mcpDesc) {
         return Tool.builder()
+                .annotations(newToolAnnotations(mcpTool))
                 .name(method.getName())
-                .description(mcpDesc.value())
+                .description(value)
                 .inputSchema(newInputSchema(method))
                 .build();
     }
@@ -60,6 +64,19 @@ enum McpTools {
 
             return newCallResult(throwable);
         }
+    }
+
+
+    private static ToolAnnotations newToolAnnotations(McpTool mcpTool) {
+        String title = mcpTool.title();
+
+        return new ToolAnnotations(
+            title.isBlank() ? mcpTool.value() : title,
+            mcpTool.readOnlyHint   (),
+            mcpTool.destructiveHint(),
+            mcpTool.idempotentHint (),
+            mcpTool.openWorldHint  (),
+            mcpTool.returnDirect   ());
     }
 
 

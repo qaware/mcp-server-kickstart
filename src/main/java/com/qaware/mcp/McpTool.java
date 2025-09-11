@@ -30,5 +30,15 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface McpTool {
-    String value();
+
+    String  value(); // LLM and human-readable description
+
+    String  title()           default "";    // human-readable title for the tool - for display purpose only - defaults to value
+
+    boolean readOnlyHint()    default true;  // modifies its environment
+    boolean destructiveHint() default false; // may perform destructive updates
+    boolean idempotentHint()  default true;  // repeated calls with same args have no additional effect
+    boolean openWorldHint()   default false; // interacts with external entities
+    boolean returnDirect()    default false; // response should directly go to user
+
 }

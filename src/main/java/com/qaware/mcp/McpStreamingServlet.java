@@ -51,9 +51,9 @@ enum McpStreamingServlet {
     }
 
 
-    private static McpStatelessServerFeatures.SyncToolSpecification newToolSpec(Object tool, Method method, McpTool mcpDesc) {
+    private static McpStatelessServerFeatures.SyncToolSpecification newToolSpec(Object tool, Method method, McpTool mcpTool) {
         return McpStatelessServerFeatures.SyncToolSpecification.builder()
-                .tool(McpTools.getTool(method, mcpDesc))
+                .tool(McpTools.getTool(method, mcpTool))
                 .callHandler(McpTools.getCallHandler(tool, method))
                 .build();
     }

@@ -51,9 +51,9 @@ enum McpSseServlet {
     }
 
 
-    private static McpServerFeatures.SyncToolSpecification newSyncToolSpecification(Object tool, Method method, McpTool mcpDesc) {
+    private static McpServerFeatures.SyncToolSpecification newSyncToolSpecification(Object tool, Method method, McpTool mcpTool) {
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(McpTools.getTool(method, mcpDesc))
+                .tool(McpTools.getTool(method, mcpTool))
                 .callHandler(McpTools.getCallHandler(tool, method))
                 .build();
     }
