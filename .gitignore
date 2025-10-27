@@ -6,8 +6,8 @@
 # Eclipse
 /bin/
 /.settings/
-/.project
-/.classpath
+.project
+.classpath
 
 # Gradle
 /.gradle/

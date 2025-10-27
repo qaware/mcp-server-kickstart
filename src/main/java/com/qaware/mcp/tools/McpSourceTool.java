@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
@@ -76,7 +78,41 @@ public class McpSourceTool {
         String url = map.get(name);
         if (url == null) throw new FileNotFoundException("Could not find the source for: " + name);
 
-        return readAll(url);
+        return readString(url);
+    }
+
+
+    public static void scan(Path rootPath, Predicate<Path> predicate, Consumer<Path> consumer) {
+        try (Stream<Path> stream = Files.find(rootPath,
+                Integer.MAX_VALUE,
+                (path, fileAttributes) -> fileAttributes.isRegularFile() && predicate.test(path))) {
+            stream.parallel().forEach(consumer);
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
+    }
+
+
+    public static URL toURL(Path path) {
+        try {
+            return path.toUri().toURL();
+        } catch (MalformedURLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+
+    public static String readString(String url) {
+        return new String(readBytes(url), StandardCharsets.UTF_8);
+    }
+
+
+    public static byte[] readBytes(String url) {
+        try (InputStream openStream = new URL(url).openStream()) {
+            return openStream.readAllBytes();
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
     }
 
 
@@ -87,13 +123,7 @@ public class McpSourceTool {
      * @param repoPath the root path of the repository to scan
      */
     private void scan(Path repoPath) {
-        try (Stream<Path> stream = Files.find(repoPath,
-            Integer.MAX_VALUE,
-            (p, a) -> a.isRegularFile() && isSourcesJar(p.getFileName().toString()))) {
-            stream.parallel().forEach(this::visitZip);
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
+        scan(repoPath, McpSourceTool::isSourcesJar, this::visitZip);
     }
 
 
@@ -131,15 +161,6 @@ public class McpSourceTool {
     }
 
 
-    private static URL toURL(Path path) {
-        try {
-            return path.toUri().toURL();
-        } catch (MalformedURLException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-
     private static String normalizeName(String path) {
         return path.replaceAll("\\.java$", "").replace('/', '.');
     }
@@ -150,22 +171,13 @@ public class McpSourceTool {
     }
 
 
-    private static String readAll(String url)   {
-        try (InputStream openStream = new URL(url).openStream()) {
-            return new String(openStream.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-    }
-
-
     private static boolean isSource(String name) {
         return name.endsWith(".java");
     }
 
 
-    private static boolean isSourcesJar(String name) {
-        return name.endsWith("-sources.jar");
+    private static boolean isSourcesJar(Path path) {
+        return path.getFileName().toString().endsWith("-sources.jar");
     }
 
 }

@@ -23,7 +23,7 @@ enum McpStreamingServlet {
 
     static HttpServletStatelessServerTransport getServlet(String serverName, String serverVersion, Object... tools) {
         HttpServletStatelessServerTransport transportProvider =
-                HttpServletStatelessServerTransport.builder().objectMapper(McpTools.OBJECT_MAPPER).build();
+                HttpServletStatelessServerTransport.builder().jsonMapper(McpTools.MCP_JSON_MAPPER).build();
 
         McpStreamingServlet.build(sync(transportProvider), serverName, serverVersion, tools);
 

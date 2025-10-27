@@ -1,27 +1,32 @@
 package com.qaware.mcp;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.modelcontextprotocol.spec.McpSchema;
-import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import io.modelcontextprotocol.spec.McpSchema.CallToolResult.Builder;
-import io.modelcontextprotocol.spec.McpSchema.Tool;
-import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.function.BiFunction;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.modelcontextprotocol.json.McpJsonMapper;
+import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
+import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult.Builder;
+import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
+import io.modelcontextprotocol.spec.McpSchema.Tool;
+import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 
 enum McpTools {
 
     ;
 
 
-    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    static final McpJsonMapper MCP_JSON_MAPPER = new JacksonMcpJsonMapper(new ObjectMapper());
 
 
     static final McpSchema.ServerCapabilities SERVER_CAPABILITIES = McpSchema.ServerCapabilities.builder()
@@ -40,7 +45,7 @@ enum McpTools {
                 .annotations(newToolAnnotations(mcpTool))
                 .name(method.getName())
                 .description(value)
-                .inputSchema(newInputSchema(method))
+                .inputSchema(newJsonSchema(method))
                 .build();
     }
 
@@ -80,7 +85,7 @@ enum McpTools {
     }
 
 
-    private static String newInputSchema(Method method) {
+    private static JsonSchema newJsonSchema(Method method) {
         Map<String, Object> paramToInfo = new LinkedHashMap<>();
 
         for (Parameter param : method.getParameters()) {
@@ -105,11 +110,7 @@ enum McpTools {
             paramToInfo.put(mcpParam.name(), property);
         }
 
-        return Json.toJson(Map.of(
-                "type"      , "object",
-                "properties", paramToInfo,
-                "required"  , paramToInfo.keySet()
-            ));
+        return new JsonSchema("object", paramToInfo, new ArrayList<>(paramToInfo.keySet()), false, null, null);
     }
 
 

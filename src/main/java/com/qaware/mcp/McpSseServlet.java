@@ -23,7 +23,7 @@ enum McpSseServlet {
 
     static HttpServletSseServerTransportProvider getServlet(String serverName, String serverVersion, Object... tools) {
         HttpServletSseServerTransportProvider transportProvider =
-                HttpServletSseServerTransportProvider.builder().objectMapper(McpTools.OBJECT_MAPPER).build();
+                HttpServletSseServerTransportProvider.builder().jsonMapper(McpTools.MCP_JSON_MAPPER).build();
 
         McpSseServlet.build(sync(transportProvider), serverName, serverVersion, tools);
 

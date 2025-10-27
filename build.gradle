@@ -4,6 +4,10 @@ plugins {
     id 'java-library'
 
     id 'maven-publish'
+
+    id 'eclipse'
+
+    id "com.adarshr.test-logger" version '3.2.0'
 }
 
 group = 'com.qaware.mcp'
@@ -16,7 +20,7 @@ repositories {
 
 dependencies {
     // mcp
-    implementation 'io.modelcontextprotocol.sdk:mcp:0.11.3'
+    implementation 'io.modelcontextprotocol.sdk:mcp:0.14.1'
     implementation 'org.eclipse.jetty:jetty-server:12.0.22'
     implementation 'org.eclipse.jetty.ee10:jetty-ee10-servlet:12.0.22'
 
@@ -27,6 +31,15 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.24.3'
     implementation 'org.apache.logging.log4j:log4j-api:2.24.3'
     implementation 'org.apache.logging.log4j:log4j-core:2.24.3'
+
+    // hppc
+    implementation 'com.carrotsearch:hppc:0.10.0'
+
+    // junit
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
+    testRuntimeOnly    'org.junit.jupiter:junit-jupiter-engine:5.12.2'
+    testRuntimeOnly    'org.junit.platform:junit-platform-launcher:1.12.2'
 }
 
 java {
@@ -63,6 +76,10 @@ tasks.register('fatJar', Jar) {
     }
     with jar
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+test {
+    useJUnitPlatform()
 }
 
 publishing {
