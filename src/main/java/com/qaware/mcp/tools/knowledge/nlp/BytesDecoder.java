@@ -109,8 +109,8 @@ public class BytesDecoder implements CharSequence {
 
     /**
      * Provides direct access to the internal character buffer for zero-copy operations.
-     * <p><b>Warning:</b> Do not modify the returned array or retain references beyond the next
-     * {@link #reset(byte[])} call. The array content and reference may change on reset.
+     * <p><b>Warning:</b> Do not retain references beyond the next {@link #reset(byte[])} call.
+     * The array content and reference may change on reset.
      *
      * @return the internal character buffer (size >= {@link #length()})
      */

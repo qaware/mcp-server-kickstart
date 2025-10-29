@@ -3,7 +3,10 @@ package com.qaware.mcp.tools.knowledge;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 import com.qaware.mcp.McpParam;
@@ -36,6 +39,7 @@ public class McpKnowledgeTool {
 
     private final Map<Path, SimpleDoc> docs = new TreeMap<>();
 
+    private final Set<Path> seen = new HashSet<>();
 
 
     @McpTool("A super helpful glossary / knowledge base you can query for terms or concepts. If you encounter a word term you do not know exactly or want to get some information, ALWAYS(!!!) query the knowledge base first - example: query='<term> <synonym>'")
@@ -48,7 +52,7 @@ public class McpKnowledgeTool {
         long startNanoTime = System.nanoTime();
         long startNanoTime0 = startNanoTime;
 
-        scan(Path.of(".")); //LÖSCHUNGEN!!!!!!!!!!!!!
+        scan(Path.of("."));
         startNanoTime = measure(startNanoTime, "scan");
 
 
@@ -66,19 +70,25 @@ public class McpKnowledgeTool {
         docs.values().parallelStream().forEach(SimpleDoc::smooth);
         docs.values().forEach(doc -> doc.update(floatHistogram));
 
-        threshold = floatHistogram.getThreshold(limit);
+        threshold = Math.max(floatHistogram.getThreshold(limit), 0.0001f); //XXX
         startNanoTime = measure(startNanoTime, "threshold");
 
-        StringBuilder target = new StringBuilder();
-        float t = threshold;
-        docs.entrySet().forEach(e -> e.getValue().append(target, t, e.getKey().toAbsolutePath().toString()));
+        int total = 1;
+        int sum = 1;
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Entry<Path, SimpleDoc> entry : docs.entrySet()) {
+            SimpleDoc simpleDoc = entry.getValue();
+            simpleDoc.append(stringBuilder, threshold, entry.getKey().toAbsolutePath().toString());
+            for (float f : simpleDoc.scores) if (f > 0) { sum += simpleDoc.size(); break; }
+            total += sum;
+        }
+        String result = stringBuilder.toString();
 
-        String result = target.toString();
         measure(startNanoTime, "paragraphs");
 
 //System.out.println(result);
 
-        measure(startNanoTime0, "🔴🔴🔴🔴🔴🔴 " + query + " --> " + limit);
+        measure(startNanoTime0, "🔴🔴🔴🔴🔴🔴 " + query + " --> " + limit + " " + result.length() + "/" + sum + "/" + total + " " + result.length() * 1000 / sum / 10f + "%");
         return result;
     }
 
@@ -113,20 +123,32 @@ public class McpKnowledgeTool {
 
     private void scan(Path rootPath) {
         McpSourceTool.scan(rootPath, McpKnowledgeTool::isTextFile, this::visitTextFile);
+
+        synchronized (docs) {
+            docs.keySet().stream().filter(x -> ! seen.contains(x)).forEach(x -> System.out.println("DEL: " + x));
+            docs.keySet().retainAll(seen);
+            seen.clear();
+        }
     }
 
 
     private void visitTextFile(Path path) {
+        synchronized (docs) {
+            seen.add(path);
+        }
+
         long lastMod = getLastMod(path);
 
         SimpleDoc simpleDoc = get(path);
         if (simpleDoc != null && simpleDoc.lastMod() == lastMod) return;
 
+        long startNano = System.nanoTime();
         byte[] bytes = McpSourceTool.readBytes(McpSourceTool.toURL(path).toString());
 
         Tokens tokens = TOKENS.get().reset(new BytesDecoder().reset(bytes));
         simpleDoc = new SimpleDoc(lastMod, dictionary, tokens);
         TOKENS.recycle(tokens);
+        System.out.println("ADD/MOD: " + path + " " + (System.nanoTime() - startNano) / 1_000_000f + "ms");
 
         put(path, simpleDoc);
     }

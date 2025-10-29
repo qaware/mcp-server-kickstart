@@ -7,12 +7,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class LinguisticTest {
 
-    private static final String TEXT = "!!!  #Running# informationEN's AutomatioN   THE ihr das la grünste ruNNing going hellen inFOrmation hellste der letzte existS daß mueßte ÄÖßßßßßßÜ";
-
 
     @Test
     public void test() {
-        verify(TEXT,
+        verify("!!!  #Running# informationEN's AutomatioN   THE ihr das la grünste ruNNing going hellen inFOrmation hellste der letzte existS daß mueßte ÄÖßßßßßßÜ",
             """
             run 292069 6 13 Running
             
@@ -43,6 +41,13 @@ class LinguisticTest {
             
             aossssssssssssu 0 137 146 ÄÖßßßßßßÜ
             """);
+
+        verify("explosion",
+                """
+                explosion 9955 0 9 explosion
+                explos 21227 0 9 explosion
+                """);
+
     }
 
 
@@ -50,15 +55,17 @@ class LinguisticTest {
         StringBuilder stringBuilder = new StringBuilder();
 
         int lastEnd = -1;
-
         for (Filter filter = Linguistic.newFilter().reset(text); filter.next();) {
 
-            if (filter.begin() >= lastEnd) {
-                lastEnd = filter.end();
+            int begin = filter.begin();
+            int end   = filter.end();
+
+            if (begin >= lastEnd) {
+                lastEnd = end;
                 if (! stringBuilder.isEmpty()) stringBuilder.append('\n');
             }
 
-            stringBuilder.append(filter + " " + Linguistic.getDF(filter.hash())  + " " + filter.begin() + " " + filter.end() + " " + filter.source().subSequence(filter.begin(), filter.end()) + "\n");
+            stringBuilder.append(filter + " " + Linguistic.getDF(filter.hash())  + " " + begin + " " + end + " " + filter.source().subSequence(begin, end) + "\n");
         }
 
         assertEquals(expected, stringBuilder.toString());

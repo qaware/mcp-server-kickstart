@@ -2,26 +2,32 @@ package com.qaware.mcp.tools.knowledge.nlp;
 
 import com.qaware.mcp.tools.knowledge.quantization.CountMinSketch;
 
+import java.util.Arrays;
+
 // hier muss ich nochmal drueber nachdenken, das funktioniert prima, ist aber echt fies!
 public class FilterDisambiguate extends Filter {
 
-    private int lastEnd = -1;
+    private static final int RELATIVE_RAW_THRESHOLD = 50;
 
-    private char[] copies = new char[2048];
+    private static final char[] EMPTY_CHAR_ARRAY = {};
 
-    private int count;
+    private static final int INIT = -1;
 
-    private int[] offsets = new int[10];
-
-    private int[] raws = new int[10];
-    private int maxRaw = 0;
-
-    private int index = 0;
 
     private final CountMinSketch minSketch;
 
+    private int lastEnd = INIT;
+
     private int begin;
     private int end;
+
+    private int emit;
+    private int count;
+    private char[] tokens = EMPTY_CHAR_ARRAY;
+    private int[] offsets = new int[10];
+
+    private int[] raws = new int[10];
+    private int maxRaw;
 
 
     public FilterDisambiguate(Tokens tokens, CountMinSketch aMinSketch) {
@@ -29,16 +35,16 @@ public class FilterDisambiguate extends Filter {
 
         minSketch = aMinSketch;
 
-        buffer = new char[2048];
+        buffer = EMPTY_CHAR_ARRAY;
     }
 
 
     @Override
     public Filter reset(CharSequence chars) {
-        index   =  0;
-        lastEnd = -1;
-        count   =  0;
-        maxRaw  =  0;
+        lastEnd = INIT;
+        emit    = 0;
+        count   = 0;
+        maxRaw  = 0;
         return super.reset(chars);
     }
 
@@ -57,31 +63,34 @@ public class FilterDisambiguate extends Filter {
 
     @Override
     public boolean next() {
-        if (index > 0) {
-            index--;
+        // emit buffered tokens
 
-            int idx = count - index - 2;
+        if (emit > 0) {
+            emit--;
 
-            boolean skip = raws[idx] < maxRaw - 50;
-//            skip = false;
-//            System.out.println(raws[idx] +  " " + maxRaw + " " + skip);
+            int token = count - emit - 2;
+
+            boolean goodToken = raws[token] >= maxRaw - RELATIVE_RAW_THRESHOLD; // token has a high enough raw value to be emitted
+//            goodToken = false;
+//            System.out.println(raws[idx] +  " " + maxRaw + " " + goodToken);
 
             length = 1;
-            if (! skip) length = copy(idx, buffer);
-            if (length == 0) return false;
+            if (goodToken) length = copyToken(token, buffer);
 
-            if (index == 0) {
+            if (emit == 0) {
+                if (length == 0) return false;
                 maxRaw = raws[count - 1];
                 raws[0] = maxRaw;
-                offsets[1] = copy(count - 1, copies);
+                offsets[1] = copyToken(count - 1, tokens);
                 count = 1;
             }
 
-            return !skip || next();
+            return goodToken || next();
         }
 
-        begin = parent.begin();
-        end   = parent.end  ();
+        saveBeginEnd();
+
+        // collect tokens until we reach a new position
 
         while (parent.next()) {
 //            System.out.println("* " + parent); //XXX
@@ -92,25 +101,27 @@ public class FilterDisambiguate extends Filter {
             raws[count] = minSketch.getRaw(parent.hash());
 
             count++;
-            offsets[count] = offset + len;
-            System.arraycopy(parent.buffer(), 0, copies, offset, len); // XXX resize copies
+            int size = offset + len;
+            offsets[count] = size;
+
+            if (len > buffer.length) buffer = new char[2 * len]; //XXX
+
+            if (size > tokens.length) tokens = Arrays.copyOf(tokens, 2 * size); //XXX
+            System.arraycopy(parent.buffer(), 0, tokens, offset, len);
 
 //            System.out.println(parent + " --> "+ minSketch.getRaw(parent.hash()) + " " + begin() + "####");
 
 //             System.out.println("BUFFER " + count + " " + new String(copies, 0, offsets[count])); // XXX
 
-            if (parent.begin() >= lastEnd) {
-                if (lastEnd == -1) {
-                    begin = parent.begin();
-                    end   = parent.end  ();
-                }
+            if (parent.begin() >= lastEnd) { // we reached a new position
+                if (lastEnd == INIT) saveBeginEnd();
 
                 lastEnd = parent.end();
-                index   = count - 1;
+                emit    = count - 1;
 
-                // System.out.println("------------- " + emit); // XXX
+//                 System.out.println("------------- " + emit); // XXX
 
-                if (index > 0) return next();
+                if (emit > 0) return next();
             }
 
             maxRaw = Math.max(maxRaw, raws[count - 1]);
@@ -118,18 +129,27 @@ public class FilterDisambiguate extends Filter {
 
 //        System.out.println("BUFFER " + count + " " + new String(copies, 0, offsets[count])); // XXX
 
-        index = count;
-        offsets[index + 1] = offsets[index];
+        // parent is exhausted, emit buffered tokens
+//System.out.println(emit);
+        emit = count;
+        offsets[emit + 1] = offsets[emit];
+//        raws[emit - 1] = Integer.MAX_VALUE;
         count++;
         return next();
     }
 
 
-    private int copy(int idx, char[] target) {
-        int offset = offsets[idx    ];
-        int len    = offsets[idx + 1] - offset;
-        System.arraycopy(copies, offset, target, 0, len);
+    private int copyToken(int token, char[] target) {
+        int offset = offsets[token];
+        int len    = offsets[token + 1] - offset;
+        System.arraycopy(tokens, offset, target, 0, len);
         return len;
+    }
+
+
+    private void saveBeginEnd() {
+        begin = parent.begin();
+        end   = parent.end  ();
     }
 
 }
