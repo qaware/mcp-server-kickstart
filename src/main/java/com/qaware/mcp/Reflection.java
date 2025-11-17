@@ -5,12 +5,14 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/** Reflection utilities. */
 @SuppressWarnings({"java:S112", "java:S1193"})
 enum Reflection {
 
     ;
 
 
+    /** Creates a new instance of a class by its name. */
     public static Object newInstance(String className, Object... initArgs) {
         try {
             return Class.forName(className).getDeclaredConstructor().newInstance(initArgs);
@@ -21,7 +23,8 @@ enum Reflection {
     }
 
 
-    public static Class<?> getInnerType(Parameter param) { // meeeh!!!
+    /** Gets the inner type of an array or generic collection parameter. */
+    public static Class<?> getInnerType(Parameter param) { // Java doesn't make this easy...
         Class<?> paramType = param.getType();
 
         if (paramType.isArray()) return paramType.getComponentType();
@@ -67,6 +70,7 @@ enum Reflection {
     }
 
 
+    /** Checks whether the given class represents an array type (array, collection, list, set). */
     public static boolean isArrayType(Class<?> klass) {
         return    klass.isArray()
                || Collection.class.isAssignableFrom(klass)
@@ -75,6 +79,7 @@ enum Reflection {
     }
 
 
+    /** Invokes a method with parameters provided in a map. */
     public static Object invokeMethod(Method method, Object instance, Map<String, Object> parameters) {
         Parameter[] methodParams = method.getParameters();
         Object[] args = new Object[methodParams.length];
@@ -137,7 +142,7 @@ enum Reflection {
             try {
                 accessObject.setAccessible(true);
             } catch (Exception e) {
-                // ignore, this is best effort
+                // ignore, this is the best effort
             }
         }
         return accessObjects;

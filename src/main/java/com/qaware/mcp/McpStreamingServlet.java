@@ -4,6 +4,8 @@ import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessSyncServer;
 import io.modelcontextprotocol.server.transport.HttpServletStatelessServerTransport;
+import io.modelcontextprotocol.spec.McpStatelessServerTransport;
+import jakarta.servlet.Servlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +15,8 @@ import java.util.Map;
 import static io.modelcontextprotocol.server.McpServer.sync;
 
 // yeah, lots of code duplication between McpSseServlet and McpStreamingServlet because there are no common interfaces
+
+/** MCP Streaming Servlet to expose tools via Streaming transport. */
 enum McpStreamingServlet {
 
     ;
@@ -21,18 +25,18 @@ enum McpStreamingServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(McpStreamingServlet.class);
 
 
-    static HttpServletStatelessServerTransport getServlet(String serverName, String serverVersion, Object... tools) {
+    static Servlet getServlet(String serverName, String serverVersion, Object... tools) {
         HttpServletStatelessServerTransport transportProvider =
                 HttpServletStatelessServerTransport.builder().jsonMapper(McpTools.MCP_JSON_MAPPER).build();
 
-        McpStreamingServlet.build(sync(transportProvider), serverName, serverVersion, tools);
+        build(serverName, serverVersion, transportProvider, tools);
 
         return transportProvider;
     }
 
 
-    private static void build(McpServer.StatelessSyncSpecification spec, String serverName, String serverVersion, Object... tools) {
-        McpStatelessSyncServer server = spec
+    private static void build(String serverName, String serverVersion, McpStatelessServerTransport transportProvider, Object... tools) {
+        McpStatelessSyncServer server = sync(transportProvider)
                 .serverInfo(serverName, serverVersion)
                 .capabilities(McpTools.SERVER_CAPABILITIES)
                 .build();

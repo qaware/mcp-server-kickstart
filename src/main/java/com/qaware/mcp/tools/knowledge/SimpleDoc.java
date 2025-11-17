@@ -15,7 +15,7 @@ class SimpleDoc {
     private final IntIntHashMap lastPos = new IntIntHashMap();
     private final IntArrayList previous = new IntArrayList();
 
-    private float[] scores;
+    /*XXX*/ float[] scores;
 
     private final Dictionary dictionary; // XXX das kann eigentlich weg, stattdesen nur mit Hashes arbeiten
 
@@ -46,6 +46,11 @@ class SimpleDoc {
         }
 
         scores = new float[pos];
+    }
+
+
+    int size() {
+        return source.length();
     }
 
 
@@ -119,9 +124,8 @@ class SimpleDoc {
     }
 
 
-    public Appendable append(Appendable appendable, float threshold, String source) {
-        int lastBegin = NOT_FOUND;
-
+    public Appendable append(Appendable appendable, float threshold, String file) {
+        int lastBegin  = NOT_FOUND;
         int blockBegin = NOT_FOUND;
 
         for (int i = 0; i < scores.length; i++) {
@@ -132,24 +136,24 @@ class SimpleDoc {
             if (scores[i] >= threshold) {
                 if (blockBegin == NOT_FOUND) blockBegin = begin;
             } else {
-                source = append(appendable, blockBegin, i, source);
+                file = append(appendable, blockBegin, i, file);
                 blockBegin = NOT_FOUND;
             }
         }
 
-        append(appendable, blockBegin, scores.length, source);
+        append(appendable, blockBegin, scores.length, file);
 
         return appendable;
     }
 
 
-    private String append(Appendable appendable, int blockBegin, int endPos, String source) {
-        if (blockBegin == NOT_FOUND) return source;
+    private String append(Appendable appendable, int blockBegin, int endPos, String file) {
+        if (blockBegin == NOT_FOUND) return file;
 
         try {
-            if (source != null) appendable.append("\n🟡 FILE/SOURCE: ").append(source).append("\n");
+            if (file != null) appendable.append("\n🟡 FILE/SOURCE: ").append(file).append("\n");
 
-            appendable.append(this.source.subSequence(blockBegin, getEnd(endPos - 1))).append("\n➖➖\n");
+            appendable.append(source.subSequence(blockBegin, getEnd(endPos - 1))).append("\n➖➖\n");
 
             return null;
 
@@ -159,13 +163,21 @@ class SimpleDoc {
     }
 
 
-    // XXX ist okey für jetzt, sollte aber verbesert werden
     public void smooth() {
-        float[] scoresCopy = scores.clone(); // geht kompakter!!!
+        smooth(scores);
 
+    }
+
+
+    // XXX ist okey für jetzt, sollte aber verbesert werden
+    static void smooth(float[] scores) {
         IntArrayList scorePos = new IntArrayList();
 
         for (int i = 0; i < scores.length; i++) if (scores[i] > 0) scorePos.add(i);
+
+        if (scorePos.isEmpty()) return;
+
+        float[] scoresCopy = scores.clone(); // geht kompakter!!!
 
         final int MAX_DIST = 100;
         final int OFFSET = 10;
@@ -204,14 +216,13 @@ class SimpleDoc {
             float ll = scores[l];
             float rr = scores[r] - slope * (r - l);
 
-            for (int j = l + 1; j < r; j++) {
-                ll = Math.max(ll - slope, 0);
+            for (int j = l; j <= r; j++) {
+                scores[j] = Math.max(Math.max(ll, rr), 0);
+                ll -= slope;
                 rr += slope;
-                scores[j] = Math.max(ll, rr);
             }
 
         }
-
     }
 
 }

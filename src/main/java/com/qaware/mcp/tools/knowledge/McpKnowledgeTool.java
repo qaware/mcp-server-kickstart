@@ -16,22 +16,27 @@ import com.qaware.mcp.tools.knowledge.nlp.BytesDecoder;
 import com.qaware.mcp.tools.knowledge.nlp.Tokens;
 
 /*
+set maxcontent=2000
 cd /D R:\codebase\_MISC\_PSBOM
-
-jmcp com.qaware.mcp.tools.knowledge.McpKnowledgeTool
-
 jmcp com.qaware.mcp.Server com.qaware.mcp.tools.knowledge.McpKnowledgeTool
 
 touch C:\Users\JörgViechtbauer\AppData\Local\github-copilot\intellij\mcp.json
 
 
+
+
+jmcp com.qaware.mcp.tools.knowledge.McpKnowledgeTool
+
+
+
+
 Nutze die Knowledge DB. Wichtig: sie enthält deutsche und englische Dokumente, übersetze die Begriffe die Du anfragst immer in beide Sprachen.
-
 Bespiel: Wenn Du nach "part" suchst, suche nach "part teil".
-
 Gib bei Antworten auch immer an, wo Du die Information her hast (idealerweise als URL oder Dateipfad)
 */
 public class McpKnowledgeTool {
+
+    private static final String MAX_CONTENT = "maxcontent";
 
     private static final Recycler<Tokens> TOKENS = new Recycler<>(McpKnowledgeTool::newFilter, null);
 
@@ -44,7 +49,9 @@ public class McpKnowledgeTool {
 
     @McpTool("A super helpful glossary / knowledge base you can query for terms or concepts. If you encounter a word term you do not know exactly or want to get some information, ALWAYS(!!!) query the knowledge base first - example: query='<term> <synonym>'")
     private /*TODO?*/ String query(@McpParam(name = "query", description = "the query for the information you need - separate the terms by space - use synonyms as well") String query/*, int limit*/) {
-        return query(query, 2_000);
+        String sizeString = System.getProperty(MAX_CONTENT, System.getenv(MAX_CONTENT));
+        int size = sizeString == null ? 2_000 : Integer.parseInt(sizeString);
+        return query(query, size);
     }
 
 
@@ -80,7 +87,7 @@ public class McpKnowledgeTool {
             SimpleDoc simpleDoc = entry.getValue();
             simpleDoc.append(stringBuilder, threshold, entry.getKey().toAbsolutePath().toString());
             for (float f : simpleDoc.scores) if (f > 0) { sum += simpleDoc.size(); break; }
-            total += sum;
+            total += simpleDoc.size();
         }
         String result = stringBuilder.toString();
 

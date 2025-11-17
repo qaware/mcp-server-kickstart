@@ -21,6 +21,7 @@ import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 
+/** Utility methods for MCP tools. */
 enum McpTools {
 
     ;
@@ -34,6 +35,7 @@ enum McpTools {
             .resources(false, false)
             .prompts(false)
             .build();
+
 
     private static final Logger LOGGER = LoggerFactory.getLogger(McpTools.class);
 

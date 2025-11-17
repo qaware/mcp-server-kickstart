@@ -13,7 +13,7 @@ class FloatHistogramTest {
 
         assertEquals(1.405f, histogram.getThreshold(10));
 
-        assertEquals(0f, histogram.getThreshold(1000));
+        assertEquals(-1f, histogram.getThreshold(1000));
     }
 
 }

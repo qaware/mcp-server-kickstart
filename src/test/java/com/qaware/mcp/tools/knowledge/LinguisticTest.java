@@ -7,10 +7,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class LinguisticTest {
 
-
     @Test
     public void test() {
-        verify("!!!  #Running# informationEN's AutomatioN   THE ihr das la grünste ruNNing going hellen inFOrmation hellste der letzte existS daß mueßte ÄÖßßßßßßÜ",
+        verify("!!!  #Running# informationEN's AutomatioN   THE ihr das la grünste-ruNNing going hellen\tinFOrmation\rhellste\nder letzte existS daß mueßte ÄÖßßßßßßÜ",
             """
             run 292069 6 13 Running
             
@@ -43,19 +42,20 @@ class LinguisticTest {
             """);
 
         verify("explosion",
-                """
-                explosion 9955 0 9 explosion
-                explos 21227 0 9 explosion
-                """);
+            """
+            explosion 9955 0 9 explosion
+            explos 21227 0 9 explosion
+            """);
 
+        verify("", "");
     }
 
 
     private static void verify(String text, String expected) {
-        StringBuilder stringBuilder = new StringBuilder();
+        Filter filter = Linguistic.newFilter().reset(text);
 
-        int lastEnd = -1;
-        for (Filter filter = Linguistic.newFilter().reset(text); filter.next();) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int lastEnd = -1; filter.next();) {
 
             int begin = filter.begin();
             int end   = filter.end();
@@ -69,7 +69,8 @@ class LinguisticTest {
         }
 
         assertEquals(expected, stringBuilder.toString());
-    }
 
+        assertFalse(filter.next());
+    }
 
 }

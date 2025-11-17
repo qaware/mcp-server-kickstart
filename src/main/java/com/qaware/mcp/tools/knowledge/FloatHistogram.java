@@ -34,7 +34,7 @@ class FloatHistogram {
      * equals or exceeds the specified count.
      *
      * @param count the cumulative count threshold
-     * @return the float value representing the threshold, or 0 if the count is not reached
+     * @return the float value representing the threshold, or -1 if the count is not reached
      */
     public float getThreshold(int count) {
         for (int i = counts.length - 1; i >= 0; i--) {
@@ -42,7 +42,7 @@ class FloatHistogram {
             if (count < 0) return (i + 0.5f) * 1f / RESOLUTION;
         }
 
-        return 0;
+        return -1;
     }
 
 

@@ -12,15 +12,25 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * MCP Server to expose tools via different transports (Streaming, SSE, Stdio).
+ */
 public class McpServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(McpServer.class);
 
+    private static final int TYPE_STREAMING = 0;
+    private static final int TYPE_SSE       = 1;
+    private static final int TYPE_STDIO     = 2;
+
+    private final List<Object> tools = new ArrayList<>();
+
     private int port = 8090;
+
     private String serverName = "MCP Server";
     private String serverVersion = "1.0.0";
-    private boolean useSSE;
-    private final List<Object> tools = new ArrayList<>();
+
+    private int transportType = TYPE_STREAMING;
 
 
     public static McpServer create() {
@@ -47,77 +57,94 @@ public class McpServer {
     }
 
 
-    /** in case the modern streaming api is not supported */
-    public McpServer useSSE(boolean useSSE) {
-        this.useSSE = useSSE;
-        return this;
+    public McpServer useStreaming() {
+        return setTransportType(TYPE_STREAMING);
     }
 
 
-    public void start() throws Exception {
+    public McpServer useSSE() {
+        return setTransportType(TYPE_SSE);
+    }
+
+
+    public McpServer useStdio() {
+        return setTransportType(TYPE_STDIO);
+    }
+
+
+    /**
+     * Starts the MCP server with the configured settings.
+     */
+    public void start() {
         if (tools.isEmpty()) {
             LOGGER.warn("I guess they front, that's why I know my life is out of tool, fool! 🎶");
             LOGGER.info("💡 Yo, your server's empty - drop some tools in the house: .addTool(new YourTool())");
             return;
         }
 
-        // (!) https://apidog.com/de/blog/java-mcp-server-guide-de/
+        LOGGER.info("Creating MCP server '{}' v{}", serverName, serverVersion);
 
-/*
-        in case we want to support STDIO
+        Object[] toolsArray = tools.toArray();
 
-        McpSyncServer syncServer = io.modelcontextprotocol.server.McpServer.sync(new StdioServerTransportProvider())
-                .serverInfo(serverName, serverVersion)
-                .capabilities(McpTools.SERVER_CAPABILITIES)
-                .build();
+        if (transportType == TYPE_STDIO) {
+            startStdioServer(toolsArray);
+            return;
+        }
 
-        McpSseServlet.addTool(syncServer, "hello");
-/*/
-
-        Servlet servlet = getServlet(serverName, serverVersion, useSSE, tools.toArray());
+        Servlet servlet = transportType == TYPE_SSE
+                ? McpSseServlet      .getServlet(serverName, serverVersion, toolsArray)
+                : McpStreamingServlet.getServlet(serverName, serverVersion, toolsArray);
 
         startWebServer(port, servlet);
     }
 
 
-    private static Servlet getServlet(String serverName, String serverVersion, boolean useSSE, Object... tools) {
-        LOGGER.info("Creating MCP servlet '{}' v{}", serverName, serverVersion);
-
-        return useSSE ? McpSseServlet      .getServlet(serverName, serverVersion, tools) :
-                        McpStreamingServlet.getServlet(serverName, serverVersion, tools);
+    private void startStdioServer(Object... toolsArray) {
+        McpStdioServer.build(serverName, serverVersion, toolsArray);
     }
 
 
-    private static void startWebServer(int port, Servlet servlet) throws Exception {
-        QueuedThreadPool threadPool = new QueuedThreadPool(32);
-        threadPool.setName("mcp-server");
+    private McpServer setTransportType(int newTransportType) {
+        transportType = newTransportType;
+        return this;
+    }
 
-        Server server = new Server(threadPool);
 
-        ServerConnector connector = new ServerConnector(server);
-        connector.setPort(port);
-        server.addConnector(connector);
+    private static void startWebServer(int port, Servlet servlet)  {
+        try {
+            QueuedThreadPool threadPool = new QueuedThreadPool(16);
+            threadPool.setName("mcp-server");
 
-        ServletContextHandler context = new ServletContextHandler();
-        context.setContextPath("/");
-        context.addServlet(new ServletHolder(servlet), "/*");
+            Server server = new Server(threadPool);
 
-        server.setHandler(context);
-        server.start();
+            ServerConnector connector = new ServerConnector(server);
+            connector.setPort(port);
+            server.addConnector(connector);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                LOGGER.info("Shutting down MCP Server...");
-                server.stop();
-            } catch (Exception e) {
-                LOGGER.error("Error during shutdown", e);
-            }
-        }));
+            ServletContextHandler context = new ServletContextHandler();
+            context.setContextPath("/");
+            context.addServlet(new ServletHolder(servlet), "/*");
 
-        LOGGER.info("MCP Server started successfully on http://localhost:{}", port);
-        LOGGER.info("Press Ctrl+C to stop the server");
+            server.setHandler(context);
+            server.start();
 
-        server.join();
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    LOGGER.info("Shutting down MCP Server...");
+                    server.stop();
+                } catch (Exception e) {
+                    LOGGER.error("Error during shutdown", e);
+                }
+            }));
+
+            LOGGER.info("MCP Server started successfully on http://localhost:{}", port);
+            LOGGER.info("Press Ctrl+C to stop the server");
+
+            server.join();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

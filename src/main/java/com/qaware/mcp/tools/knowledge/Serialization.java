@@ -16,6 +16,8 @@ import java.util.zip.InflaterInputStream;
  * is slow (~10ms for typical objects). Use sparingly.
  *
  * <p><b>Thread Safety:</b> All methods are thread-safe (stateless).
+ *
+ * Idea: keep it simple and avoid external dependencies.
  */
 public enum Serialization {
 

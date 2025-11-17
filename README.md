@@ -1,20 +1,41 @@
 # MCP Server Kickstart 🚀
 
-A minimalistic Java framework for quickly creating [MCP (Model Context Protocol)](https://modelcontextprotocol.io) servers without the hassle of dealing with Jetty configuration, JSON handling, or reflection magic.
+A minimalistic and flexible Java framework for quickly creating
+[MCP (Model Context Protocol)](https://modelcontextprotocol.io) servers —
+supporting **Streaming**, **SSE**, and **STDIO** transports
+without the hassle of dealing with Jetty configuration, JSON handling, or reflection magic.
 
 ## Features
 
-- **Annotation-based tools** - Just annotate your methods with `@McpTool` and `@McpParam`
+- **Annotation-based tools** — Simply annotate your methods with `@McpTool` and `@McpParam`
 - **Automatic JSON schema generation** - No manual schema writing needed
+- **Three transport options**
+    - **Streaming** (default)
+    - **SSE**
+    - **STDIO**
 - **Fluent Builder API** - Clean and readable server configuration
-- **Zero configuration** - Sensible defaults, just add your tools and go
 - **Robust reflection handling** - Supports arrays, collections, and complex types
-- **Built-in Jetty server** - Production-ready HTTP server included
+- **Built-in Jetty server** - Production-ready HTTP server included (SSE/streaming modes)
+- **STDIO server** (Claude Desktop, Cline)
 - **Graceful shutdown** - Proper cleanup on application termination
+- **Zero or minimal configuration** - Sensible defaults, just add your tools and go
 
-## Quick Start
+## Supported Transports
 
-### 1. Clone and Build
+This server supports **three MCP transport modes**:
+
+| Transport | Flag | Recommended For |
+|----------|------|------------------|
+| **Streaming (default)** | *(no flag)* or `--streaming` | GitHub Copilot (IntelliJ), Claude Code |
+| **SSE** | `--sse` | Codeium / KiloCode |
+| **STDIO** | `--stdio` | Claude Desktop, Cline |
+
+If no flag is specified, the server runs in **Streaming mode**.
+
+
+# Quick Start
+
+## 1. Clone and Build
 
 ```bash
 git clone https://github.com/qaware/mcp-server-kickstart.git
@@ -22,7 +43,7 @@ cd mcp-server-kickstart
 ./gradlew build
 ```
 
-### 2. Create Your Tool Class
+## 2. Create Your Tool Class
 
 ```java
 public class MyTools {
@@ -42,10 +63,13 @@ public class MyTools {
 }
 ```
 
-### 3. Start Your Server
+
+## 3. Run
+
+### 3a. Start server "manually"
 
 ```java
-public class Server {
+public class MyServer {
 
     public static void main(String[] args) throws Exception {
         McpServer.create()
@@ -57,7 +81,7 @@ public class Server {
 }
 ```
 
-### 4. Run
+### 3b. Run via gradle
 
 ```
 ./gradlew run
@@ -73,15 +97,65 @@ If you want to expose different tool(s), use
 
 You can provide multiple class names.
 
-### Debugging
+### 3c. Run via far jar
 
-The server logs all tool registrations and requests. Check the console output for:
+```
+java -jar mcp-server-kickstart.jar
+```
+
+Starts in Streaming mode
+Loads default HelloWorldTools
+
+If you want to expose different tool(s), use
+
+```
+java -jar mcp-server-kickstart.jar --sse com.qaware.mcp.tools.McpSourceTool
+```
+
+### 3d. Run with Docker
+
+```bash
+docker build -t mcp-server-kickstart .
+docker run -i --rm mcp-server-kickstart
+```
+
+The server uses STDIO transport and communicates via standard input/output. You can provide multiple tool class names as arguments.
+
+#### How STDIO Transport Works
+
+In docker, the MCP server is set to use **STDIO (Standard Input/Output) transport** instead of HTTP/SSE. This means:
+
+1. **Process-based communication**: MCP clients spawn your server as a subprocess
+2. **Simple integration**: No need to manage ports, URLs, or network configuration
+3. **Secure**: Communication happens within the same machine via pipes
+4. **Dynamic startup**: Each MCP client session starts a fresh server instance
+5. **Docker-friendly**: Easy to containerize and run in isolation
+
+The server reads MCP protocol messages from `stdin` and writes responses to `stdout`, making it compatible with any MCP client that supports STDIO transport (like Claude Desktop, Cline, etc.).
+
+## Debugging
+
+The server logs all tool registrations and requests.
+
+In Streaming or SSE mode you will see output like:
 
 ```
 INFO  - Creating MCP servlet 'My MCP Server' v1.0.0
 INFO  - Registering tools from: MyTools
 INFO  - MCP Server started successfully on http://localhost:8090
 ```
+
+
+In STDIO mode
+
+```
+INFO  - Starting MCP server (STDIO)
+INFO  - Registering tools from: MyTools
+INFO  - Ready to receive MCP protocol messages
+```
+
+**Note**: When spawned by an MCP client (like Claude Desktop), logs are typically written to the client's log directory, not to your console. Check your MCP client's documentation for log locations.
+
 
 ### Supported Types
 
@@ -115,7 +189,7 @@ Return types are automatically JSON-serialized
 
 Exceptions are automatically caught and returned as error responses
 
-## Connecting to AI Tools
+## Integration with MCP Clients
 
 ### Codeium (KiloCode) ✅ Tested
 
@@ -187,10 +261,55 @@ Configuration:
 
 Note: Claude Desktop configuration may differ - please check the official Claude MCP documentation for the exact format.
 
-### General MCP Clients
+### Docker execution
+
+```json
+{
+  "mcpServers": {
+    "mcp-knowledge-server": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp-server-kickstart:latest",
+        "com.qaware.mcp.tools.knowledge.McpKnowledgeTool"
+      ]
+    }
+  }
+}
+```
+
+### Docker with volume mount for documentation
+```json
+{
+  "mcpServers": {
+    "mcp-knowledge-server": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/path/to/your/docs:/data:ro",
+        "mcp-server-kickstart:latest",
+        "com.qaware.mcp.tools.knowledge.McpKnowledgeTool"
+      ]
+    }
+  }
+}
+```
+
+### Other MCP Clients
 
 Any MCP client should be able to connect to: http://localhost:8090/sse
 
+Any MCP client that supports STDIO transport can connect by spawning the process:
+```bash
+java -jar mcp-server-kickstart-all-1.0.0.jar [ToolClassName]
+```
+
+See `mcp-config-examples.json` for more configuration examples.
 
 ## Examples
 
@@ -247,11 +366,27 @@ public class DataTools {
 }
 ```
 
-## Building Fat JAR
+## Building and Deployment
 
-```
+### Fat JAR
+```bash
 ./gradlew fatJar
-java -jar build/libs/mcp-server-kickstart-1.0.0.jar
+java -jar build/libs/mcp-server-kickstart-all-1.0.0.jar
+```
+
+### Docker Image
+```bash
+# Build the image
+docker build -t mcp-server-kickstart:latest .
+
+# Run with default tools
+docker run -i --rm mcp-server-kickstart:latest
+
+# Run with custom tool
+docker run -i --rm mcp-server-kickstart:latest com.example.MyCustomTool
+
+# Run with volume mount
+docker run -i --rm -v /path/to/docs:/docs:ro mcp-server-kickstart:latest
 ```
 
 ## Requirements
@@ -261,10 +396,12 @@ java -jar build/libs/mcp-server-kickstart-1.0.0.jar
 
 ## Dependencies
 
-- **MCP SDK**: `io.modelcontextprotocol.sdk:mcp:0.10.0`
-- **Jetty**: `org.eclipse.jetty:jetty-server:12.0.22`
-- **Jackson**: `com.fasterxml.jackson.core:jackson-databind:2.16.1`
-- **SLF4J**: `org.slf4j:slf4j-simple:2.0.9`
+- **MCP SDK**: `io.modelcontextprotocol.sdk:mcp:0.14.1` - Core MCP protocol support
+- **Jackson**: `com.fasterxml.jackson.core:jackson-databind:2.17.0` - JSON serialization
+- **Log4j**: `org.apache.logging.log4j:log4j-slf4j2-impl:2.24.3` - Logging
+- **HPPC**: `com.carrotsearch:hppc:0.10.0` - High-performance primitive collections
+
+Note: Jetty dependencies can be removed from build.gradle as they're no longer needed for STDIO transport.
 
 ## License
 

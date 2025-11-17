@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+
+# Build outputs
+build/
+bin/
+.gradle/
+
+# IDE
+.idea/
+.eclipse/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# Serena/Claude
+.serena/
+.claude/
+
+# Documentation
+README.md
+*.md
+
+# Other
+.DS_Store
+*.log

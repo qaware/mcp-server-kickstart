@@ -46,14 +46,14 @@ public final class Recycler<T> {
 
 
     public List<T> drain() {
-        List<T> objects = new ArrayList<>();
-
         synchronized (pool) {
+            List<T> objects = new ArrayList<>(size());
+
             objects.addAll(pool);
             pool.clear();
-        }
 
-        return objects;
+            return objects;
+        }
     }
 
 

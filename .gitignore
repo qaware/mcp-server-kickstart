@@ -1,7 +1,8 @@
 # IntelliJ
 *.iml
 *.iws
-/.idea/
+.idea/
+http-client.private.env.json
 
 # Eclipse
 /bin/
@@ -28,4 +29,5 @@
 hs_err_pid*
 replay_pid*
 
-http-client.private.env.json
+# Maven
+/target/

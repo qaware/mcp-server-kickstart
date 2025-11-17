@@ -66,26 +66,22 @@ public class FilterDisambiguate extends Filter {
         // emit buffered tokens
 
         if (emit > 0) {
+            int token = count - emit - 1;
+            int raw = raws[token];
+            if (raw == INIT) return false; // found sentinel -> all tokens emitted
+
+            boolean highEnoughDF = raw >= maxRaw - RELATIVE_RAW_THRESHOLD; // token has a high enough raw value to be emitted
+            if (highEnoughDF) length = copyToken(token, buffer);
+
             emit--;
-
-            int token = count - emit - 2;
-
-            boolean goodToken = raws[token] >= maxRaw - RELATIVE_RAW_THRESHOLD; // token has a high enough raw value to be emitted
-//            goodToken = false;
-//            System.out.println(raws[idx] +  " " + maxRaw + " " + goodToken);
-
-            length = 1;
-            if (goodToken) length = copyToken(token, buffer);
-
             if (emit == 0) {
-                if (length == 0) return false;
-                maxRaw = raws[count - 1];
-                raws[0] = maxRaw;
+                maxRaw     = raws[count - 1];
+                raws[0]    = maxRaw;
                 offsets[1] = copyToken(count - 1, tokens);
-                count = 1;
+                count      = 1;
             }
 
-            return goodToken || next();
+            return highEnoughDF || next();
         }
 
         saveBeginEnd();
@@ -127,14 +123,12 @@ public class FilterDisambiguate extends Filter {
             maxRaw = Math.max(maxRaw, raws[count - 1]);
         }
 
-//        System.out.println("BUFFER " + count + " " + new String(copies, 0, offsets[count])); // XXX
+//        System.out.println("BUFFER " + count + " " + new String(tokens, 0, offsets[count])); // XXX
 
-        // parent is exhausted, emit buffered tokens
-//System.out.println(emit);
-        emit = count;
-        offsets[emit + 1] = offsets[emit];
-//        raws[emit - 1] = Integer.MAX_VALUE;
-        count++;
+        // parent is exhausted, emit buffered tokens with sentinel
+        raws[count] = INIT;
+        emit = count + 1;
+        count += 2;
         return next();
     }
 
