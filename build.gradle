@@ -32,6 +32,9 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-api:2.24.3'
     implementation 'org.apache.logging.log4j:log4j-core:2.24.3'
 
+    // Chronos API
+    implementation 'de.qaware.qaerp:chronos-api-client-java:1.4.2-SNAPSHOT'
+
     // hppc
     implementation 'com.carrotsearch:hppc:0.10.0'
 
@@ -44,19 +47,15 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
     testRuntimeOnly    'org.junit.jupiter:junit-jupiter-engine:5.12.2'
     testRuntimeOnly    'org.junit.platform:junit-platform-launcher:1.12.2'
-    
-    
-    
-    
-    
+
     implementation 'com.google.code.gson:gson:2.13.2' // XXX
-    
-    
+
+
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -69,7 +68,7 @@ tasks.named('run', JavaExec) {
 }
 
 jar {
-    archiveBaseName = 'mcp-server-kickstart'
+    archiveBaseName = 'mcp-server-chronos-simple'
     manifest {
         attributes 'Main-Class': application.mainClass.get()
     }
@@ -79,7 +78,7 @@ tasks.register('fatJar', Jar) {
     group = 'build'
     description = "Assembles a fat jar archive containing the classes of the 'main' feature and all dependencies."
 
-    archiveBaseName = 'mcp-server-kickstart-all'
+    archiveBaseName = 'mcp-server-chronos-simple-all'
     manifest {
         attributes 'Main-Class': application.mainClass.get()
     }
