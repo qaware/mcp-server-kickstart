@@ -21,6 +21,7 @@ public class Server {
 
         McpServer mcpServer = McpServer.create();
 
+        mcpServer.serverInfo("Chronos MCP server", "0.1");
         mcpServer.addTool(new ChronosTool());
         mcpServer.start();
     }

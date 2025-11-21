@@ -1,7 +1,7 @@
-# MCP Server Kickstart 🚀
+# MCP Server Chronos Simple 🚀
 
-A minimalistic and flexible Java framework for quickly creating
-[MCP (Model Context Protocol)](https://modelcontextprotocol.io) servers —
+A minimalistic and flexible Java project to use the Chronos API via
+[MCP (Model Context Protocol)](https://modelcontextprotocol.io) —
 supporting **Streaming**, **SSE**, and **STDIO** transports
 without the hassle of dealing with Jetty configuration, JSON handling, or reflection magic.
 
@@ -38,12 +38,12 @@ If no flag is specified, the server runs in **Streaming mode**.
 ## 1. Clone and Build
 
 ```bash
-git clone https://github.com/qaware/mcp-server-kickstart.git
-cd mcp-server-kickstart
+git clone https://github.com/qaware/mcp-server-chronos-simple.git
+cd mcp-server-chronos-simple
 ./gradlew build
 ```
 
-## 2. Create Your Tool Class
+## 2. Create additional tool class
 
 ```java
 public class MyTools {
@@ -89,34 +89,17 @@ public class MyServer {
 
 Your MCP server will be available at http://localhost:8090/mcp
 
-If you want to expose different tool(s), use
+### Debugging
 
 ```
-./gradlew run --args com.qaware.mcp.tools.McpSourceTool
-```
-
-You can provide multiple class names.
-
-### 3c. Run via far jar
-
-```
-java -jar mcp-server-kickstart.jar
-```
-
-Starts in Streaming mode
-Loads default HelloWorldTools
-
-If you want to expose different tool(s), use
-
-```
-java -jar mcp-server-kickstart.jar --sse com.qaware.mcp.tools.McpSourceTool
+java -jar mcp-server-chronos-simple.jar
 ```
 
 ### 3d. Run with Docker
 
 ```bash
-docker build -t mcp-server-kickstart .
-docker run -i --rm mcp-server-kickstart
+docker build -t mcp-server-chronos-simple .
+docker run -i --rm mcp-server-chronos-simple
 ```
 
 The server uses STDIO transport and communicates via standard input/output. You can provide multiple tool class names as arguments.
