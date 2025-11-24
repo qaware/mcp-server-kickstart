@@ -7,6 +7,7 @@ import com.qaware.mcp.McpTool;
 import de.qaware.qaerp.chronos.client.api.ChronosClientConfig;
 import de.qaware.qaerp.chronos.client.api.ProjectsClient;
 import de.qaware.qaerp.chronos.client.api.TimesheetsClient;
+import de.qaware.qaerp.chronos.client.api.error.ChronosClientException;
 import de.qaware.qaerp.chronos.client.impl.*;
 import de.qaware.qaerp.chronos.client.impl.projects.ProjectsClientImpl;
 import de.qaware.qaerp.chronos.client.impl.projects.ProjectsConnector;
@@ -20,8 +21,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * A MCP tool enabling AI agents to interact with the QAware timekeeping and project management system Chronos.
@@ -83,6 +83,55 @@ public class ChronosTool {
     }
 
     /**
+     * Retrieves the relevant Information for the currently connected user.
+     * This includes the active contracts and the recently booked projects and accounts
+     *
+     * @param bearerToken authentication token for the user (Google account as JWT token)
+     * @return the source code of the requested class as a UTF-8 string
+     */
+    @McpTool("Retrieves relevant Information for the currently connected user. This includes the active contracts and the recently booked projects and accounts")
+    public UserContext retrieveUserContextChronosMCP(@McpParam(name = "authorizationToken", description = "authentication token for the current user") String bearerToken) {
+        try {
+            List<String> contracts;
+            List<TimesheetListingEntryDto> currentTimesheets = timesheetsClient.list(YearMonth.now(), bearerToken)
+                    .stream()
+                    .map(TimesheetListingEntryDto::of)
+                    .toList();
+            contracts = currentTimesheets.stream().map(TimesheetListingEntryDto::contract).toList();
+
+            Set<String> recentlyBookedProjects = new TreeSet<>();
+            Set<String> recentlyBookedAccounts = new TreeSet<>();
+            for (String contract : contracts) {
+                // Read data for current month
+                collectRecentBookingData(bearerToken, contract, YearMonth.now(), recentlyBookedProjects, recentlyBookedAccounts);
+                // Read data for previous month
+                collectRecentBookingData(bearerToken, contract, YearMonth.now().minusMonths(1), recentlyBookedProjects, recentlyBookedAccounts);
+            }
+
+            return new UserContext(contracts, recentlyBookedProjects.stream().toList(), recentlyBookedAccounts.stream().toList());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void collectRecentBookingData(String bearerToken,
+                                          String contract,
+                                          YearMonth monthToEvaluate,
+                                          Set<String> recentlyBookedProjects,
+                                          Set<String> recentlyBookedAccounts) throws InterruptedException {
+        try {
+            ExportTimesheet currentTimesheet;
+            currentTimesheet = timesheetsClient.export(contract, monthToEvaluate, bearerToken);
+            for (ExportBooking projectInTimesheet : currentTimesheet.getBookings()) {
+                recentlyBookedProjects.add(projectInTimesheet.getProjectName());
+                recentlyBookedAccounts.add(projectInTimesheet.getAccountName());
+            }
+        } catch (ChronosClientException e) {
+            // ignore, simply do not add information
+        }
+    }
+
+    /**
      * Retrieves the timesheet for the given year and month.
      * If any of the required parameters are null, search for the current month
      *
@@ -127,7 +176,7 @@ public class ChronosTool {
                                             @McpParam(name = "breakDuration", description = "total duration of breaks during the workday in ISO-8601 duration format PnDTnHnMn.nS") String breakDurationString,
                                             @McpParam(name = "bookings", description = "List of bookings, each booking as JSON-object with the fields " +
                                                     "'projectName' (string), accountName (string), duration (ISO-8601 duration format PnDTnHnMn.nS) and comment (string)") List<String> bookings,
-                                            @McpParam(name = "authorizationToken", description = "authentication token for the current user") String bearerToken) throws InterruptedException {
+                                            @McpParam(name = "authorizationToken", description = "authentication token for the current user") String bearerToken) {
 
         try {
             LocalDate workingDay = LocalDate.parse(workingDayString);
@@ -148,17 +197,17 @@ public class ChronosTool {
                     .build();
 
             LOGGER.trace("Updating working day timesheet {}", updatedTimesheet);
+            timesheetsClient.importTimesheet(
+                    updatedTimesheet,
+                    contract,
+                    YearMonth.from(workingDay),
+                    bearerToken
+            );
         } catch (InterruptedException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
-//        timesheetsClient.importTimesheet(
-//                updatedTimesheet,
-//                contract,
-//                YearMonth.from(workingDay),
-//                bearerToken
-//        );
-        return false;
+        return true;
     }
 
     private static YearMonth buildYearMonth(Integer year, Integer month) {
