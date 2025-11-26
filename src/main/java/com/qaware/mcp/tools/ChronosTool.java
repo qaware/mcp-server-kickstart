@@ -37,7 +37,7 @@ public class ChronosTool {
     public ChronosTool() {
         ChronosApi chronosApi = new ChronosApi(
                 ChronosClientConfig.builder()
-                        .chronosApiBaseUrl("https://zeit.qaware.de")
+                        .chronosApiBaseUrl("https://zeit-test.qaware.de")
                         .httpClientTimeoutSeconds(20)
                         .build(),
                 new JsonPrinter(),
@@ -66,7 +66,7 @@ public class ChronosTool {
      * @param year year-part of the search
      * @param month month-part of the search
      * @param bearerToken authentication token for the user (Google account as JWT token)
-     * @return the source code of the requested class as a UTF-8 string
+     * @return List of Projects including their accounts
      */
     @McpTool("Retrieves the projects available for the given year and month. Use this to retrieve a list of projects and accounts")
     public List<ProjectListingEntry> listProjectsChronosMCP(@McpParam(name = "year", description = "year as int in YYYY format") Integer year,
@@ -87,7 +87,7 @@ public class ChronosTool {
      * This includes the active contracts and the recently booked projects and accounts
      *
      * @param bearerToken authentication token for the user (Google account as JWT token)
-     * @return the source code of the requested class as a UTF-8 string
+     * @return Recently used contracts, projects and accounts
      */
     @McpTool("Retrieves relevant Information for the currently connected user. This includes the active contracts and the recently booked projects and accounts")
     public UserContext retrieveUserContextChronosMCP(@McpParam(name = "authorizationToken", description = "authentication token for the current user") String bearerToken) {
@@ -138,7 +138,7 @@ public class ChronosTool {
      * @param year year-part of the search
      * @param month month-part of the search
      * @param bearerToken authentication token for the user (Google account as JWT token)
-     * @return the source code of the requested class as a UTF-8 string
+     * @return Timesheet(s) of the given month for the active user
      */
     @McpTool("Retrieves the users timesheet for the given year and month. Use this to retrieve the current work times and time bookings for the current user.")
     public List<TimesheetListingEntryDto> getTimesheetsChronosMCP(@McpParam(name = "year", description = "year as int in YYYY format") Integer year,
@@ -166,9 +166,9 @@ public class ChronosTool {
      * @param workingEndTimeString   time the workday ended
      * @param breakDurationString    total duration of breaks during the workday
      * @param bearerToken            authentication token for the user (Google account as JWT token)
-     * @return the source code of the requested class as a UTF-8 string
+     * @return true if the booking was successful
      */
-    @McpTool("Retrieves the users timesheet for the given year and month. Use this to retrieve the current work times and time bookings for the current user.")
+    @McpTool("Book the time entries of a given day into the respective timesheet")
     public Boolean bookWorkingDayChronosMCP(@McpParam(name = "contract", description = "Contract number of the employee to be used for the booking") String contract,
                                             @McpParam(name = "workingDay", description = "the day to edit/book in YYY-MM-dd format") String workingDayString,
                                             @McpParam(name = "workingStartTime", description = "time the workday started in HH:mm format") String workingStartTimeString,
