@@ -222,6 +222,9 @@ public class ChronosTool {
 
         try {
             ExportTimesheet currentTimesheet = timesheetsClient.export(contract, YearMonth.from(workingDay), bearerToken);
+            if (currentTimesheet == null) {
+                throw new ChronosMCPException("Failed to export timesheet for contract " + contract + " and month " + YearMonth.from(workingDay) + ": received null response from API");
+            }
 
             List<ImportWorkingHour> updatedWorkingHours = getUpdatedWorkingHours(workingDay, workingStartTime, workingEndTime, breakDuration, currentTimesheet);
 

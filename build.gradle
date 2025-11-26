@@ -35,22 +35,45 @@ dependencies {
     // Chronos API
     implementation 'de.qaware.qaerp:chronos-api-client-java:1.4.2-SNAPSHOT'
 
-    // hppc
-    implementation 'com.carrotsearch:hppc:0.10.0'
+    // Testing
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.13.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.13.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.13.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
+    testImplementation 'org.mockito:mockito-core:5.20.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.20.0'
+    testImplementation 'org.assertj:assertj-core:3.27.6'
+}
 
-    // tika
-    implementation 'org.apache.tika:tika-core:3.2.3'
-    implementation 'org.apache.tika:tika-parsers-standard-package:3.2.3'
+test {
+    useJUnitPlatform {
+        excludeTags 'integration'
+    }
+    jvmArgs(
+        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.time=ALL-UNNAMED'
+    )
+}
 
-    // junit
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
-    testRuntimeOnly    'org.junit.jupiter:junit-jupiter-engine:5.12.2'
-    testRuntimeOnly    'org.junit.platform:junit-platform-launcher:1.12.2'
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests for ChronosTool with mocked Chronos clients.'
+    group = 'verification'
 
-    implementation 'com.google.code.gson:gson:2.13.2' // XXX
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
 
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
 
+    jvmArgs(
+        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.time=ALL-UNNAMED'
+    )
+
+    shouldRunAfter test
 }
 
 java {
