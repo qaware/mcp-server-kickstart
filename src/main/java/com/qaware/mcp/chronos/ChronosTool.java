@@ -1,18 +1,12 @@
-package com.qaware.mcp.tools;
+package com.qaware.mcp.chronos;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qaware.mcp.McpParam;
 import com.qaware.mcp.McpTool;
-import de.qaware.qaerp.chronos.client.api.ChronosClientConfig;
 import de.qaware.qaerp.chronos.client.api.ProjectsClient;
 import de.qaware.qaerp.chronos.client.api.TimesheetsClient;
 import de.qaware.qaerp.chronos.client.api.error.ChronosClientException;
-import de.qaware.qaerp.chronos.client.impl.*;
-import de.qaware.qaerp.chronos.client.impl.projects.ProjectsClientImpl;
-import de.qaware.qaerp.chronos.client.impl.projects.ProjectsConnector;
-import de.qaware.qaerp.chronos.client.impl.timesheets.TimesheetsClientImpl;
-import de.qaware.qaerp.chronos.client.impl.timesheets.TimesheetsConnector;
 import de.qaware.qaerp.chronos.client.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +15,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 /**
@@ -30,33 +25,39 @@ import java.util.*;
  */
 public class ChronosTool {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronosTool.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final ProjectsClient projectsClient;
     private final TimesheetsClient timesheetsClient;
 
+    /**
+     * Creates a ChronosTool with default configuration.
+     */
     public ChronosTool() {
-        ChronosApi chronosApi = new ChronosApi(
-                ChronosClientConfig.builder()
-                        .chronosApiBaseUrl("https://zeit-test.qaware.de")
-                        .httpClientTimeoutSeconds(20)
-                        .build(),
-                new JsonPrinter(),
-                new RequestAuthorizer(
-                        new AccessTokenProvider()
-                )
-        );
-        this.projectsClient = new ProjectsClientImpl(
-                new ProjectsConnector(
-                        new JsonReader(),
-                        chronosApi
-                ));
-        this.timesheetsClient = new TimesheetsClientImpl(
-                new TimesheetsConnector(
-                        new JsonPrinter(),
-                        new JsonReader(),
-                        chronosApi)
-        );
+        this(new ChronosClientFactory());
+    }
+
+    /**
+     * Creates a ChronosTool with the given factory.
+     *
+     * @param factory The factory to use for creating Chronos clients
+     */
+    public ChronosTool(ChronosClientFactory factory) {
+        this.projectsClient = factory.createProjectsClient();
+        this.timesheetsClient = factory.createTimesheetsClient();
         LOGGER.info("Starting ChronosTool");
+    }
+
+    /**
+     * Creates a ChronosTool with specific client instances (for testing).
+     *
+     * @param projectsClient The ProjectsClient to use
+     * @param timesheetsClient The TimesheetsClient to use
+     */
+    ChronosTool(ProjectsClient projectsClient, TimesheetsClient timesheetsClient) {
+        this.projectsClient = projectsClient;
+        this.timesheetsClient = timesheetsClient;
+        LOGGER.info("Starting ChronosTool with injected clients");
     }
 
     /**
@@ -78,7 +79,8 @@ public class ChronosTool {
         try {
             return projectsClient.listProjects(fetchedYearMonth, bearerToken);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+            throw new ChronosMCPException("Failed to fetch projects for " + fetchedYearMonth, e);
         }
     }
 
@@ -110,7 +112,8 @@ public class ChronosTool {
 
             return new UserContext(contracts, recentlyBookedProjects.stream().toList(), recentlyBookedAccounts.stream().toList());
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+            throw new ChronosMCPException("Failed to retrieve user context", e);
         }
     }
 
@@ -127,7 +130,8 @@ public class ChronosTool {
                 recentlyBookedAccounts.add(projectInTimesheet.getAccountName());
             }
         } catch (ChronosClientException e) {
-            // ignore, simply do not add information
+            LOGGER.debug("Could not retrieve timesheet data for contract {} in {}: {}. This is expected if no data exists.",
+                    contract, monthToEvaluate, e.getMessage());
         }
     }
 
@@ -146,14 +150,15 @@ public class ChronosTool {
                                                     @McpParam(name = "authorizationToken", description = "authentication token for the current user") String bearerToken) {
         YearMonth fetchedYearMonth = buildYearMonth(year, month);
 
-        LOGGER.debug("Fetching projects for year month {}", fetchedYearMonth);
+        LOGGER.debug("Fetching timesheets for year month {}", fetchedYearMonth);
         try {
             return timesheetsClient.list(fetchedYearMonth, bearerToken)
                     .stream()
                     .map(TimesheetListingEntryDto::of)
                     .toList();
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+            throw new ChronosMCPException("Failed to fetch timesheets for " + fetchedYearMonth, e);
         }
     }
 
@@ -178,18 +183,50 @@ public class ChronosTool {
                                                     "'projectName' (string), accountName (string), duration (ISO-8601 duration format PnDTnHnMn.nS) and comment (string)") List<String> bookings,
                                             @McpParam(name = "authorizationToken", description = "authentication token for the current user") String bearerToken) {
 
-        try {
-            LocalDate workingDay = LocalDate.parse(workingDayString);
-            LocalTime workingStartTime = LocalTime.parse(workingStartTimeString);
-            LocalTime workingEndTime = LocalTime.parse(workingEndTimeString);
-            Duration breakDuration = Duration.parse(breakDurationString);
-            List<ImportBooking> currentDayBookings = mapCurrentDayBookings(workingDay, bookings);
+        // Validate required parameters
+        if (contract == null || contract.isBlank()) {
+            throw new ChronosMCPException("Contract number is required");
+        }
+        if (bearerToken == null || bearerToken.isBlank()) {
+            throw new ChronosMCPException("Authorization token is required");
+        }
+        if (bookings == null || bookings.isEmpty()) {
+            throw new ChronosMCPException("At least one booking is required");
+        }
 
+        LocalDate workingDay;
+        LocalTime workingStartTime;
+        LocalTime workingEndTime;
+        Duration breakDuration;
+
+        try {
+            workingDay = LocalDate.parse(workingDayString);
+            workingStartTime = LocalTime.parse(workingStartTimeString);
+            workingEndTime = LocalTime.parse(workingEndTimeString);
+            breakDuration = Duration.parse(breakDurationString);
+        } catch (DateTimeParseException e) {
+            throw new ChronosMCPException("Invalid date/time format provided: " + e.getMessage(), e);
+        }
+
+        // Validate parsed values
+        if (workingStartTime.isAfter(workingEndTime)) {
+            throw new ChronosMCPException("Working start time (" + workingStartTime + ") must be before end time (" + workingEndTime + ")");
+        }
+        if (breakDuration.isNegative()) {
+            throw new ChronosMCPException("Break duration cannot be negative");
+        }
+        Duration totalWorkTime = Duration.between(workingStartTime, workingEndTime);
+        if (breakDuration.compareTo(totalWorkTime) >= 0) {
+            throw new ChronosMCPException("Break duration (" + breakDuration + ") cannot be >= total work time (" + totalWorkTime + ")");
+        }
+
+        try {
             ExportTimesheet currentTimesheet = timesheetsClient.export(contract, YearMonth.from(workingDay), bearerToken);
 
             List<ImportWorkingHour> updatedWorkingHours = getUpdatedWorkingHours(workingDay, workingStartTime, workingEndTime, breakDuration, currentTimesheet);
 
-            List<ImportBooking> updatedBookings = getUpdatedBookings(workingDay, currentDayBookings, currentTimesheet);
+            List<ImportBooking> newDayBookings = mapUpdatedDayBookings(workingDay, bookings);
+            List<ImportBooking> updatedBookings = getUpdatedBookings(workingDay, newDayBookings, currentTimesheet);
 
             ImportTimesheet updatedTimesheet = ImportTimesheet.builder()
                     .workingHours(updatedWorkingHours)
@@ -203,9 +240,11 @@ public class ChronosTool {
                     YearMonth.from(workingDay),
                     bearerToken
             );
-        } catch (InterruptedException | RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ChronosMCPException("Booking operation was interrupted for " + workingDayString, e);
+        } catch (ChronosClientException e) {
+            throw new ChronosMCPException("Failed to book working day " + workingDayString + ": " + e.getMessage(), e);
         }
         return true;
     }
@@ -259,16 +298,14 @@ public class ChronosTool {
         return updatedBookings;
     }
 
-    private static List<ImportBooking> mapCurrentDayBookings(LocalDate workingDay, List<String> bookingJsons) {
-        ObjectMapper objectMapper = new ObjectMapper();
-
+    private static List<ImportBooking> mapUpdatedDayBookings(LocalDate workingDay, List<String> bookingJsons) {
         return bookingJsons.stream()
                 .map(bookingString ->
                         {
                             try {
-                                return objectMapper.readValue(bookingString, ImportBookingDto.class);
+                                return OBJECT_MAPPER.readValue(bookingString, ImportBookingDto.class);
                             } catch (JsonProcessingException e) {
-                                throw new ChronosMCPException("Exception parsing the list of bookings: " + e.getMessage(), e);
+                                throw new ChronosMCPException("Failed to parse booking JSON: '" + bookingString + "' - " + e.getMessage(), e);
                             }
                         }
                 )

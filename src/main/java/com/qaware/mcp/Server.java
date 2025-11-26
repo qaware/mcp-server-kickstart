@@ -1,8 +1,6 @@
 package com.qaware.mcp;
 
-import java.util.Arrays;
-import java.util.List;
-import com.qaware.mcp.tools.ChronosTool;
+import com.qaware.mcp.chronos.ChronosTool;
 
 /**
  * The {@code Server} class is the main entry point for starting the MCP server application.
@@ -17,8 +15,7 @@ import com.qaware.mcp.tools.ChronosTool;
  */
 public class Server {
 
-    static void main(String[] args) {
-
+    static void main() throws Exception {
         McpServer mcpServer = McpServer.create();
 
         mcpServer.serverInfo("Chronos MCP server", "0.1");
