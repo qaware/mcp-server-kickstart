@@ -1,5 +1,6 @@
 package com.qaware.mcp;
 
+import io.modelcontextprotocol.server.McpSyncServer;
 import jakarta.servlet.Servlet;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
@@ -100,7 +101,18 @@ public class McpServer {
 
 
     private void startStdioServer(Object... toolsArray) {
-        McpStdioServer.build(serverName, serverVersion, toolsArray);
+        McpSyncServer server = McpStdioServer.build(serverName, serverVersion, toolsArray);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                LOGGER.info("Shutting down MCP STDIO Server...");
+                server.close();
+            } catch (Exception e) {
+                LOGGER.error("Error during shutdown", e);
+            }
+        }));
+
+        LOGGER.info("MCP STDIO Server started successfully");
     }
 
 
