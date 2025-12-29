@@ -101,12 +101,12 @@ public class McpServer {
 
 
     private void startStdioServer(Object... toolsArray) {
-        McpSyncServer server = McpStdioServer.build(serverName, serverVersion, toolsArray);
+        McpSyncServer mcpSyncServer = McpStdioServer.build(serverName, serverVersion, toolsArray);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 LOGGER.info("Shutting down MCP STDIO Server...");
-                server.close();
+                mcpSyncServer.close();
             } catch (Exception e) {
                 LOGGER.error("Error during shutdown", e);
             }
