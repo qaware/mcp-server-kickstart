@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
     // mcp
-    implementation 'io.modelcontextprotocol.sdk:mcp:0.14.1'
+    implementation 'io.modelcontextprotocol.sdk:mcp:0.17.0'
     implementation 'org.eclipse.jetty:jetty-server:12.0.22'
     implementation 'org.eclipse.jetty.ee10:jetty-ee10-servlet:12.0.22'
 

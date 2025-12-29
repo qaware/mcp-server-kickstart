@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * MCP Server to expose tools via different transports (Streaming, SSE, Stdio).
@@ -103,14 +104,7 @@ public class McpServer {
     private void startStdioServer(Object... toolsArray) {
         McpSyncServer mcpSyncServer = McpStdioServer.build(serverName, serverVersion, toolsArray);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                LOGGER.info("Shutting down MCP STDIO Server...");
-                mcpSyncServer.close();
-            } catch (Exception e) {
-                LOGGER.error("Error during shutdown", e);
-            }
-        }));
+        registerShutdownHook(() -> { mcpSyncServer.close(); return null; });
 
         LOGGER.info("MCP STDIO Server started successfully");
     }
@@ -140,14 +134,7 @@ public class McpServer {
             server.setHandler(context);
             server.start();
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                try {
-                    LOGGER.info("Shutting down MCP Server...");
-                    server.stop();
-                } catch (Exception e) {
-                    LOGGER.error("Error during shutdown", e);
-                }
-            }));
+            registerShutdownHook(() -> { server.stop(); return null; });
 
             LOGGER.info("MCP Server started successfully on http://localhost:{}", port);
             LOGGER.info("Press Ctrl+C to stop the server");
@@ -157,6 +144,18 @@ public class McpServer {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    private static void registerShutdownHook(Callable<Void> callable) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                LOGGER.info("Shutting down MCP Server...");
+                callable.call();
+            } catch (Exception e) {
+                LOGGER.error("Error during shutdown", e);
+            }
+        }));
     }
 
 }
