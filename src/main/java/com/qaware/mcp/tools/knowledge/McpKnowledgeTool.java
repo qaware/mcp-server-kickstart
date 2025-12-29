@@ -9,6 +9,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.qaware.mcp.McpParam;
 import com.qaware.mcp.McpTool;
 import com.qaware.mcp.tools.McpSourceTool;
@@ -35,6 +38,8 @@ Bespiel: Wenn Du nach "part" suchst, suche nach "part teil".
 Gib bei Antworten auch immer an, wo Du die Information her hast (idealerweise als URL oder Dateipfad)
 */
 public class McpKnowledgeTool {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(McpKnowledgeTool.class);
 
     private static final String MAX_CONTENT = "maxcontent";
 
@@ -104,7 +109,7 @@ public class McpKnowledgeTool {
         long endNanoTime = System.nanoTime();
 
         float millis = (System.nanoTime() - startNanoTime) / 1_000_000f;
-        System.out.println(string + "... " + millis + "ms");
+        LOGGER.debug("{}... {}ms", string, millis);
 
         return endNanoTime;
     }
@@ -116,7 +121,7 @@ public class McpKnowledgeTool {
         while (tokens.next()) {
             int df = Linguistic.getDF(tokens.hash());
             float score = (float) (2 * Math.log(3_000_000.0 / (1 + df)));
-            System.out.println(tokens + " " + df + " " + score);
+            LOGGER.debug("{} {} {}", tokens, df, score);
 
             int tokenId = dictionary.get(tokens);
             if (tokenId >= 0) {
@@ -132,7 +137,7 @@ public class McpKnowledgeTool {
         McpSourceTool.scan(rootPath, McpKnowledgeTool::isTextFile, this::visitTextFile);
 
         synchronized (docs) {
-            docs.keySet().stream().filter(x -> ! seen.contains(x)).forEach(x -> System.out.println("DEL: " + x));
+            docs.keySet().stream().filter(x -> ! seen.contains(x)).forEach(x -> LOGGER.debug("DEL: {}", x));
             docs.keySet().retainAll(seen);
             seen.clear();
         }
@@ -155,7 +160,7 @@ public class McpKnowledgeTool {
         Tokens tokens = TOKENS.get().reset(new BytesDecoder().reset(bytes));
         simpleDoc = new SimpleDoc(lastMod, dictionary, tokens);
         TOKENS.recycle(tokens);
-        System.out.println("ADD/MOD: " + path + " " + (System.nanoTime() - startNano) / 1_000_000f + "ms");
+        LOGGER.debug("ADD/MOD: {} {}ms", path, (System.nanoTime() - startNano) / 1_000_000f);
 
         put(path, simpleDoc);
     }
