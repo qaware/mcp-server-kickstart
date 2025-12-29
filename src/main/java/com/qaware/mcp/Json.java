@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 enum Json {
 
-    ; // heul nur, ich finde das besser 🤪
+    ; // I like that idiom
 
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
