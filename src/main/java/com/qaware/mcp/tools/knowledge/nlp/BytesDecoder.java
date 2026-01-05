@@ -7,7 +7,7 @@ import java.nio.charset.*;
 import java.util.Objects;
 
 /**
- * A reusable, non-thread-safe decoder for converting byte arrays into character sequences.
+ * A reusable, NON-thread-safe decoder for converting byte arrays into character sequences.
  * <p>
  * This class is designed for efficiency and is intended to be reused within a single thread.
  * It uses a {@link CharsetDecoder} to decode byte arrays into characters and provides direct

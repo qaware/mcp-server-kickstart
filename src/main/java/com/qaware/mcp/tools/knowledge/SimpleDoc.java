@@ -49,7 +49,7 @@ class SimpleDoc {
     }
 
 
-    int size() {
+    int length() {
         return source.length();
     }
 
@@ -65,18 +65,23 @@ class SimpleDoc {
     }
 
 
+    CharSequence word(int i) {
+        return source.subSequence(getBegin(i), getEnd(i));
+    }
+
+
     Appendable print(Appendable out) {
         try {
             int lastBegin = NOT_FOUND;
 
-            for (int i = 0; i < scores.length - 1; i++) {
+            for (int i = 0; i < scores.length; i++) {
                 int begin = getBegin(i);
                 if (begin != lastBegin) {
                     lastBegin = begin;
                     if (i != 0) out.append('\n');
                     out.append(i + "\t" + scores[i] + "\t" + source.subSequence(begin, getEnd(i)) + "\t");
                 }
-                out.append(" " + dictionary.get(tokenIds.get(i)) + "<" + tokenIds.get(i) + ">");
+                out.append(" " + dictionary.get(getToken(i)) + "<" + getToken(i) + ">");
             }
 
             return out;
@@ -87,12 +92,17 @@ class SimpleDoc {
     }
 
 
-    public void clear() {
+    private int getToken(int i) {
+        return tokenIds.get(i);
+    }
+
+
+    void resetScores() {
         Arrays.fill(scores, 0);
     }
 
 
-    public void score(int tokenId, float score) {
+    void addScore(int tokenId, float score) {
         for (int pos = lastPos.getOrDefault(tokenId, NOT_FOUND); pos != NOT_FOUND; pos = previous.get(pos)) {
 
             int firstPos = pos;
@@ -103,7 +113,7 @@ class SimpleDoc {
     }
 
 
-    public void update(FloatHistogram floatHistogram) {
+    void update(FloatHistogram floatHistogram) {
         int lastBegin = NOT_FOUND;
 
         for (int i = 0; i < scores.length; i++) {
@@ -114,17 +124,17 @@ class SimpleDoc {
     }
 
 
-    private int getBegin(int i) {
+    int getBegin(int i) {
         return beginEnd.get(i * 2);
     }
 
 
-    private int getEnd(int i) {
+    int getEnd(int i) {
         return beginEnd.get(i * 2 + 1);
     }
 
 
-    public Appendable append(Appendable appendable, float threshold, String file) {
+    Appendable append(Appendable appendable, float threshold, String file) {
         int lastBegin  = NOT_FOUND;
         int blockBegin = NOT_FOUND;
 
@@ -165,11 +175,9 @@ class SimpleDoc {
 
     public void smooth() {
         smooth(scores);
-
     }
 
 
-    // XXX ist okey für jetzt, sollte aber verbesert werden
     static void smooth(float[] scores) {
         IntArrayList scorePos = new IntArrayList();
 
@@ -179,9 +187,7 @@ class SimpleDoc {
 
         float[] scoresCopy = scores.clone(); // geht kompakter!!!
 
-        final int MAX_DIST = 100;
-        final int OFFSET = 10;
-
+        final int MAX_DIST = 200;
         for (int i = 0; i < scorePos.size(); i++) {
 
             int pos = scorePos.get(i);
@@ -193,14 +199,15 @@ class SimpleDoc {
                 int dist = pos - pos2;
                 if (dist > MAX_DIST) break;
 
-                score += scoresCopy[pos2] * OFFSET / (OFFSET + dist);
+                score += scoresCopy[pos2] / (1 + dist);
             }
 
             for (int j = i + 1; j < scorePos.size(); j++) {
                 int pos2 = scorePos.get(j);
                 int dist = pos2 - pos;
                 if (dist > MAX_DIST) break;
-                score += scoresCopy[pos2] * OFFSET / (OFFSET + dist);
+
+                score += scoresCopy[pos2] / (1 + dist);
             }
 
             scores[pos] = (float) score;

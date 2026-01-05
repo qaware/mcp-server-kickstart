@@ -179,7 +179,7 @@ public enum Chars {
     }
 
 
-    private static long mix(long hash) { // XXX auslagern?
+    private static long mix(long hash) {
         return Long.reverseBytes(hash * MURMUR_MIXING_CONSTANT);
     }
 

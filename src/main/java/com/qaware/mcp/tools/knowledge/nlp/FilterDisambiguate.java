@@ -7,7 +7,7 @@ import java.util.Arrays;
 // hier muss ich nochmal drueber nachdenken, das funktioniert prima, ist aber echt fies!
 public class FilterDisambiguate extends Filter {
 
-    private static final int RELATIVE_RAW_THRESHOLD = 50;
+    private static final int RELATIVE_RAW_THRESHOLD = 40;
 
     private static final char[] EMPTY_CHAR_ARRAY = {};
 

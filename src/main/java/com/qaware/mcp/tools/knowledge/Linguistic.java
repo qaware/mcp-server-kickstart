@@ -39,31 +39,63 @@ public enum Linguistic {
     }
 
 
+    public static int getDf(String word, Filter filter) {
+        return filter.reset(word).next() ? getDF(filter.hash()) : NO_WORD;
+    }
+
+
+    public static int getDF(long hash) {
+        return (int) quantizer.get(dfMinSketch.getRaw(hash));
+    }
+
+
+    public static Filter newFilter() {
+        Filter normalization =
+            new FilterStopWords(
+                new FilterGermanNormalization(
+                    new FilterEnglishPossessive(
+                        new FilterToLower(
+                            new TokenizerSimple()))),
+                stopWordHashes);
+
+        FilterCombine filterCombine = new FilterCombine(normalization);
+        filterCombine.combine(new FilterStemmerSnowball(filterCombine, new German2Stemmer()));
+        filterCombine.combine(new FilterStemmerSnowball(filterCombine, new EnglishStemmer()));
+
+        return new FilterDisambiguate(new FilterDeduplicate(filterCombine), dfMinSketch);
+    }
 
 
 
-    //XXX
+
+
+
+
+
+
+    // XXX TEST ZEUG
+
     public static void main(String[] args) throws Exception {
         Filter filterEN =
-            new FilterStemmerSnowball(
-                new FilterStopWords(
-                    new FilterGermanNormalization(
-                        new FilterEnglishPossessive(
-                            new FilterToLower(
-                                new TokenizerSimple()))),
-                    stopWordHashes),
-                new EnglishStemmer());
+                new FilterStemmerSnowball(
+                        new FilterStopWords(
+                                new FilterGermanNormalization(
+                                        new FilterEnglishPossessive(
+                                                new FilterToLower(
+                                                        new TokenizerSimple()))),
+                                stopWordHashes),
+                        new EnglishStemmer());
 
 
         Filter filterDE =
-            new FilterStemmerSnowball(
-                new FilterStopWords(
-                    new FilterGermanNormalization(
-                        new FilterEnglishPossessive(
-                            new FilterToLower(
-                                new TokenizerSimple()))),
-                    stopWordHashes),
-                new German2Stemmer());
+                new FilterStemmerSnowball(
+                        new FilterStopWords(
+                                new FilterGermanNormalization(
+                                        new FilterEnglishPossessive(
+                                                new FilterToLower(
+                                                        new TokenizerSimple()))),
+                                stopWordHashes),
+                        new German2Stemmer());
 
 
         Filter filter = newFilter();
@@ -104,35 +136,6 @@ public enum Linguistic {
             System.out.println();
         }
 
-    }
-    //XXX
-
-
-
-    public static int getDf(String word, Filter filter) {
-        return filter.reset(word).next() ? getDF(filter.hash()) : NO_WORD;
-    }
-
-
-    public static int getDF(long hash) {
-        return (int) quantizer.get(dfMinSketch.getRaw(hash));
-    }
-
-
-    public static Filter newFilter() {
-        Filter normalization =
-            new FilterStopWords(
-                new FilterGermanNormalization(
-                    new FilterEnglishPossessive(
-                        new FilterToLower(
-                            new TokenizerSimple()))),
-                stopWordHashes);
-
-        FilterCombine filterCombine = new FilterCombine(normalization);
-        filterCombine.combine(new FilterStemmerSnowball(filterCombine, new German2Stemmer()));
-        filterCombine.combine(new FilterStemmerSnowball(filterCombine, new EnglishStemmer()));
-
-        return new FilterDisambiguate(new FilterDeduplicate(filterCombine), dfMinSketch);
     }
 
 }

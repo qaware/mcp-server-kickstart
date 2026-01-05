@@ -35,11 +35,23 @@ dependencies {
     // hppc
     implementation 'com.carrotsearch:hppc:0.10.0'
 
+    // tika
+    implementation 'org.apache.tika:tika-core:3.2.3'
+    implementation 'org.apache.tika:tika-parsers-standard-package:3.2.3'
+
     // junit
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.2'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
     testRuntimeOnly    'org.junit.jupiter:junit-jupiter-engine:5.12.2'
     testRuntimeOnly    'org.junit.platform:junit-platform-launcher:1.12.2'
+    
+    
+    
+    
+    
+    implementation 'com.google.code.gson:gson:2.13.2' // XXX
+    
+    
 }
 
 java {

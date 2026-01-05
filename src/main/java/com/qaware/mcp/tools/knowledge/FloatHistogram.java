@@ -45,18 +45,4 @@ class FloatHistogram {
         return -1;
     }
 
-
-// XXX: These methods are currently unused but could be implemented in the future.
-//    public void clear() {
-//        Arrays.fill(counts, 0);
-//    }
-//
-//
-//    public void combine(FloatHistogram floatHistogram) {
-//        int length = floatHistogram.counts.length;
-//        if (counts.length < length) counts = Arrays.copyOf(counts, length);
-//
-//        for (int i = 0; i < length; i++) counts[i] += floatHistogram.counts[i];
-//    }
-
 }

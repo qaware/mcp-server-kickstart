@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * Thread-safe Recycler
- */
+/** Thread-safe Recycler */
 public final class Recycler<T> {
 
     private final Deque<T> pool = new ArrayDeque<>();

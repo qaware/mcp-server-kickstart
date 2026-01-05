@@ -26,6 +26,8 @@ import java.util.List;
 public class Server {
 
     public static void main(String[] args) {
+//System.err.println("HIER: " + Arrays.toString(args));
+
         McpServer mcpServer = McpServer.create();
 
         args = handle("--sse"      , () -> mcpServer.useSSE()      , args);
@@ -35,7 +37,6 @@ public class Server {
         if (args.length == 0) {
             args = new String[] { HelloWorldTools.class.getName() };
         }
-
         for (String className : args) {
             mcpServer.addTool(Reflection.newInstance(className));
         }
