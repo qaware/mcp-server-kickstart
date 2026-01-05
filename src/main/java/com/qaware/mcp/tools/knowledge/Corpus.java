@@ -75,6 +75,20 @@ class Corpus {
     }
 
 
+    synchronized String getAll() {
+        updateCorpus();
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (Map.Entry<String, SimpleDoc> entry : docs.entrySet()) {
+            SimpleDoc simpleDoc = entry.getValue();
+            simpleDoc.append(stringBuilder, 0, simpleDoc.scores.length, entry.getKey());
+        }
+
+        return stringBuilder.toString();
+    }
+
+
     private void updateCorpus() {
         scanner.accept(this::addLocation);
         docs.keySet().stream().filter(x -> ! seen.contains(x)).forEach(x -> LOGGER.debug("DEL: {}", x));

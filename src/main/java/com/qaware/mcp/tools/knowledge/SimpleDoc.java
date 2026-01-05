@@ -157,7 +157,7 @@ class SimpleDoc {
     }
 
 
-    private String append(Appendable appendable, int blockBegin, int endPos, String file) {
+    String append(Appendable appendable, int blockBegin, int endPos, String file) {
         if (blockBegin == NOT_FOUND) return file;
 
         try {
