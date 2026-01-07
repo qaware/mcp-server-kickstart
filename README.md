@@ -406,3 +406,84 @@ Note: Jetty dependencies can be removed from build.gradle as they're no longer n
 ## License
 
 MIT License - Feel free to use this in your projects!
+
+## Using the Knowledge and Slurp Tools
+
+First generate the jar
+
+```bash
+./gradlew fatJar
+```
+
+### Using STDIO Transport with Knowledge and Slurp Tools
+
+Now create or modify your `mcp.json` configuration file to include the following server definition:
+
+Location:
+
+* macOS: ~/Library/Application Support/github-copilot/intellij/mcp.json
+* Windows: %APPDATA%\AppData\Local\github-copilot\intellij\mcp.json
+
+```json
+{
+    "servers": {
+        "stdio": {
+            "command": "<PATH TO JAVA17+>/bin/java.exe", // or just java
+            "args": [
+                "-jar",
+                "<PATH>/mcp-server-kickstart/build/libs/mcp-server-kickstart-all-1.1.0.jar",
+                "--stdio",
+                "com.qaware.mcp.tools.knowledge.McpKnowledgeTool",
+                "com.qaware.mcp.tools.knowledge.McpSlurpTool"
+            ],
+            "env": {
+                "MCP_KB_MAX_CONTENT": "3000",
+                "MCP_KB_ROOT": "<YOUR KNOWLEDGEBASE1>;<YOUR KNOWLEDGEBASE2>",
+                "MCP_SLURP_ROOT": "<YOUR SLURP DATA PATH1>;<YOUR SLURP DATA PATH2>"
+            }
+        }
+    }
+}
+```
+
+This configuration ensures that the server starts with the `McpKnowledgeTool` and `McpSlurpTool` enabled, using the specified environment variables for knowledge base and slurp data paths.
+
+### Using Streaming Transport with Knowledge and Slurp Tools
+
+In case you want to start the server manually, you first need to configure the environment variables and provide the necessary arguments. These tools enable the server to manage a knowledge database and process various document formats.
+
+#### Knowledge Database Configuration
+- **Environment Variables**:
+    - `MCP_KB_ROOT`: Specifies the directories for the knowledge base, separated by `;`.
+    - `MCP_KB_MAX_CONTENT`: Defines the token budget for non stop word tokens. Approximately 2x `MCP_KB_MAX_CONTENT` tokens will be sent. Adjust this value as needed.
+
+#### Slurp Configuration
+- **Environment Variables**:
+    - `MCP_SLURP_ROOT`: Specifies the directories for slurp data, separated by `;`.
+
+The `slurp` tool imports all supported documents into the LLM. Be cautious when processing large amounts of data.
+
+#### Supported Document Formats
+Currently, the following formats are supported:
+- `.doc`, `.docx`
+- `.pdf`
+- `.ppt`, `.pptx`
+- `.xls`, `.xlsx`
+
+Additional formats can be supported by extending Apache Tika capabilities.
+
+```bash
+<PATH TO JAVA17+>/bin/java.exe -jar mcp-server-kickstart-all-1.1.0.jar com.qaware.mcp.tools.knowledge.McpKnowledgeTool com.qaware.mcp.tools.knowledge.McpSlurpTool
+```
+
+### Example Configuration in `mcp.json`
+
+```json
+{
+"servers": {
+        "localhost": {
+            "url": "http://localhost:8090/mcp"
+        }
+    }
+}
+```

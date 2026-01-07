@@ -12,11 +12,23 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Map;
 
 /*
 jmcp com.qaware.mcp.tools.knowledge.TikaTool C:/Viechtbauer/Zeugs/Docs/QAware/AIR/SystemhandbuchAirBMW.docx
 jmcp com.qaware.mcp.tools.knowledge.TikaTool C:\Viechtbauer\Zeugs\Docs\QAware\_Vorträge\2025-11-06-KnowledgeDB-MCP.pptx
+ */
+/**
+ * Utility for extracting textual content from common office/document formats using Apache Tika.
+ *
+ * The implementation intentionally uses a minimal, conservative Tika configuration (see the embedded XML
+ * {@code tikaConfig}) that only registers a small, safe set of pure-Java parsers. This prevents invocation of external
+ * binaries or potentially unsafe parsers (OCR/Tesseract, ExternalParser/LibreOffice, etc.).
+ *
+ * Usage: call {@link #isSupported(String)} to check a filename's extension and {@link #parse(InputStream)}
+ * to obtain extracted text. The returned text preserves simple markup (headings, paragraphs, table
+ * cell separators) to keep structure useful for downstream processing.
  */
 enum TikaTool {
 
@@ -52,7 +64,8 @@ enum TikaTool {
             
             <!--
               Minimal Tika config that only registers a small, safe set of parsers.
-              Purpose: ensure no external binaries or external parsers (Tesseract, ExternalParser/LibreOffice, Solr, ...) are used.
+              Purpose: ensure no external binaries or external parsers (Tesseract, ExternalParser/LibreOffice, ...)
+              are used.
             -->
             
             <properties>
@@ -99,33 +112,58 @@ enum TikaTool {
 
     private static class MarkupContentHandler extends DefaultHandler {
 
-        private final StringBuilder writer = new StringBuilder();
+        private final StringBuilder stringBuilder = new StringBuilder();
 
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) {
             String name = localName == null ? qName : localName;
 
-            if ("p".equals(name) && writer.length() > 0 && writer.charAt(writer.length() - 1) == ' ') return;
+            if ("p".equals(name) && !stringBuilder.isEmpty() && stringBuilder.charAt(stringBuilder.length() - 1) == ' ') return;
 
-            writer.append(TAGS.getOrDefault(name, ""));
+            stringBuilder.append(TAGS.getOrDefault(name, ""));
         }
 
 
         @Override
         public void characters(char[] chars, int start, int length) {
-            writer.append(chars, start, length);
+            stringBuilder.append(chars, start, length);
         }
 
 
         @Override
         public String toString() {
-            return writer.toString();
+            return stringBuilder.toString();
         }
 
     }
 
 
+    /**
+     * Check whether the given filename has a supported extension (case-insensitive and accepts common office/document formats).
+     */
+    static boolean isSupported(String fileName) {
+        String lowerCase = fileName.toLowerCase(Locale.ROOT);
+        return     lowerCase.endsWith(".docx") || lowerCase.endsWith(".doc")
+                || lowerCase.endsWith(".pdf")
+                || lowerCase.endsWith(".pptx") || lowerCase.endsWith(".ppt")
+                || lowerCase.endsWith(".xlsx") || lowerCase.endsWith(".xls");
+    }
+
+
+    /**
+     * Parse the provided document input stream using a restricted, safe Tika configuration and
+     * return extracted text.
+     *
+     * Security note: the embedded Tika configuration deliberately excludes external/unsafe parsers
+     * to avoid invoking external binaries (OCR/Tesseract, ExternalParser/LibreOffice, etc.).
+     *
+     * The input stream will be closed by this method.
+     *
+     * @param inputStream the document input stream (will be closed)
+     * @return extracted and trimmed text with simple markup preserved
+     * @throws RuntimeException when parsing fails
+     */
     static String parse(InputStream inputStream) {
         try {
             ContentHandler contentHandler = new MarkupContentHandler();
@@ -136,7 +174,7 @@ enum TikaTool {
                 autoDetectParser.parse(inputStream, contentHandler, new Metadata(), new ParseContext());
             }
 
-            return contentHandler.toString().trim().replaceAll("\n\n\n+", "\n\n"); // geht effizienter, aber erstmal okay so
+            return contentHandler.toString().trim().replaceAll("\n\n\n+", "\n\n"); // could be optimized, but fine for now
 
         } catch (Exception e) {
             throw new RuntimeException(e);

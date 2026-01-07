@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 class FileSystemScanner implements Consumer<Consumer<Location>> {
@@ -22,17 +23,17 @@ class FileSystemScanner implements Consumer<Consumer<Location>> {
     @Override
     public void accept(Consumer<Location> locationConsumer) {
         for (String root : roots) {
-            McpSourceTool.scan(Path.of(root), FileSystemScanner::isTextFile, path -> {
+            McpSourceTool.scan(Path.of(root), FileSystemScanner::isSupported, path -> {
 
-                String location = path.toAbsolutePath().toString();
+                String location = path.toAbsolutePath().toString().replace('\\', '/');
 
                 locationConsumer.accept(
 
                         new Location() {
 
-                            private byte[] bytes;
+                            private byte[] bytesCached;
 
-                            private String string;
+                            private String tikaCached;
 
 
                             @Override
@@ -47,12 +48,12 @@ class FileSystemScanner implements Consumer<Consumer<Location>> {
 
                             @Override
                             public synchronized CharSequence getChars() {
-                                if (bytes == null) bytes = McpSourceTool.readBytes(McpSourceTool.toURL(path).toString());
+                                if (bytesCached == null) bytesCached = McpSourceTool.readBytes(McpSourceTool.toURL(path).toString());
 
-                                if (! isTika(location)) return new BytesDecoder().reset(bytes);
-// doppeltes parsen vermeiden
-                                if (string == null) string = TikaTool.parse(new ByteArrayInputStream(bytes));
-                                return string;
+                                if (! TikaTool.isSupported(location)) return new BytesDecoder().reset(bytesCached);
+
+                                if (tikaCached == null) tikaCached = TikaTool.parse(new ByteArrayInputStream(bytesCached));
+                                return tikaCached;
                             }
                         }
                 );
@@ -68,19 +69,14 @@ class FileSystemScanner implements Consumer<Consumer<Location>> {
         try {
             return Files.getLastModifiedTime(path).toMillis();
         } catch (IOException e) {
-            return -1;
+            return System.currentTimeMillis();
         }
     }
 
 
-    private static boolean isTextFile(Path path) {
-        String fileName = path.getFileName().toString();
-        return fileName.endsWith(".md") || fileName.endsWith(".adoc") || fileName.endsWith(".txt") || isTika(fileName);
-    }
-
-
-    private static boolean isTika(String fileName) {
-        return fileName.endsWith(".docx") || fileName.endsWith(".doc") || fileName.endsWith(".pdf") || fileName.endsWith(".pptx") || fileName.endsWith(".ppt") || fileName.endsWith(".xlsx") || fileName.endsWith(".xls");
+    private static boolean isSupported(Path path) {
+        String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
+        return fileName.endsWith(".md") || fileName.endsWith(".adoc") || fileName.endsWith(".txt") || TikaTool.isSupported(fileName);
     }
 
 }

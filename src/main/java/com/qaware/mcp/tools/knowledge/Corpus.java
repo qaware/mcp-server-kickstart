@@ -25,6 +25,28 @@ class Corpus {
     private final Consumer<Consumer<Location>> scanner;
 
 
+    /**
+     * Create a Corpus that is populated via a pluggable scanner.
+     *
+     * Scanner contract (important):
+     * - The provided {@code scanner} MUST invoke the given consumer only during the execution of the
+     *   call to {@code scanner.accept(...)}, i.e. all calls to {@code consumer.accept(location)} must
+     *   happen-before {@code scanner.accept(...)} returns. The scanner is free to perform work
+     *   asynchronously and may dispatch consumer calls from multiple threads concurrently while
+     *   {@code scanner.accept(...)} is executing.
+     * - The scanner MUST NOT schedule callbacks that execute after {@code scanner.accept(...)} has returned.
+     *   Invocations that occur outside the accept call are disallowed and may lead to unpredictable
+     *   behavior.
+     *
+     * Concurrency notes:
+     * - {@link Corpus} uses some internal synchronization (synchronized methods and synchronized blocks)
+     *   but is not designed as a fully concurrent data structure for arbitrary concurrent mutation from
+     *   external threads outside the accept window. Accepting concurrent calls during the accept window
+     *   is allowed, but callers should be aware of potential contention and performance implications.
+     *
+     * @param scanner a Consumer that accepts a Location-consumer and must invoke it (possibly concurrently)
+     *                only during the call to {@code scanner.accept(...)}
+     */
     Corpus(Consumer<Consumer<Location>> scanner) {
         this.scanner = scanner;
     }
@@ -49,8 +71,8 @@ class Corpus {
         docs.values().parallelStream().forEach(SimpleDoc::smooth);
         docs.values().forEach(doc -> doc.update(floatHistogram));
 
-        // coole mögliche erweiterung: ich gucke mir die top 1% passagen an und hole mir daraus weitere tokens, die ich dann nochmal scoren lasse
-        // -> automatic query expansion
+        // possible extension: inspect the top 1% passages and extract additional tokens from them,
+        // which can then be re-scored to implement automatic query expansion
 
         float threshold = Math.max(floatHistogram.getThreshold(limit), 0.00001f); // minimal threshold to avoid fetching everything
         startNanoTime = measure(startNanoTime, "threshold");
@@ -60,6 +82,9 @@ class Corpus {
         StringBuilder stringBuilder = new StringBuilder();
         for (Map.Entry<String, SimpleDoc> entry : docs.entrySet()) {
             SimpleDoc simpleDoc = entry.getValue();
+
+            System.out.println(simpleDoc);
+
             simpleDoc.append(stringBuilder, threshold, entry.getKey());
             for (float score : simpleDoc.scores) if (score > 0) { sum += simpleDoc.length(); break; }
             total += simpleDoc.length();

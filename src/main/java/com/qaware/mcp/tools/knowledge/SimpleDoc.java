@@ -108,6 +108,7 @@ class SimpleDoc {
             int firstPos = pos;
             while (firstPos > 0 && getBegin(firstPos - 1) == getBegin(firstPos)) firstPos--;
 
+//            scores[firstPos] = (float) Math.sqrt(scores[firstPos] * scores[firstPos] + score * score); // XXX besser? saturating addition?
             scores[firstPos] = Math.max(scores[firstPos], score);
         }
     }
@@ -233,3 +234,4 @@ class SimpleDoc {
     }
 
 }
+

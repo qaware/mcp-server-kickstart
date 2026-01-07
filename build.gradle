@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'com.qaware.mcp'
-version = '1.0.0'
+version = '1.1.0'
 
 repositories {
     mavenLocal()
@@ -83,8 +83,12 @@ tasks.register('fatJar', Jar) {
     manifest {
         attributes 'Main-Class': application.mainClass.get()
     }
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    from(configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }) {
+        exclude 'META-INF/*.SF',
+                'META-INF/*.DSA',
+                'META-INF/*.RSA',
+                'META-INF/*.EC',
+                'META-INF/SIG-*'
     }
     with jar
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
