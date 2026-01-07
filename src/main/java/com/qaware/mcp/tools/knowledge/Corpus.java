@@ -83,8 +83,6 @@ class Corpus {
         for (Map.Entry<String, SimpleDoc> entry : docs.entrySet()) {
             SimpleDoc simpleDoc = entry.getValue();
 
-            System.out.println(simpleDoc);
-
             simpleDoc.append(stringBuilder, threshold, entry.getKey());
             for (float score : simpleDoc.scores) if (score > 0) { sum += simpleDoc.length(); break; }
             total += simpleDoc.length();
