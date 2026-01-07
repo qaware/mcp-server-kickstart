@@ -17,7 +17,7 @@ class CorpusTest {
         Path resourceDir = Paths.get(getClass().getClassLoader().getResource("corpus-test").toURI());
         Corpus corpus = new Corpus(new FileSystemScanner(resourceDir.toString()));
 
-        // then
+        // check getAll
         verify( """
                 🟡 FILE*/Text.txt
                 Ein Dokument auf Deutsch.
@@ -33,7 +33,7 @@ class CorpusTest {
                 """,
                 corpus.getAll());
 
-        // and
+        // verify that mixed language queries work
         verify( """
                 🟡 FILE*/Text.txt
                 Dokument auf Deutsch.
@@ -42,9 +42,20 @@ class CorpusTest {
                 
                 🟡 FILE*/sub/Word.docx
                 text contains the stuff
-                ➖➖               
+                ➖➖
                 """,
                 corpus.getPassages("contained der ist the a -#Dökumenten!. _CONTaININg's", 12));
+
+        // verify that using terms multiple times gives them a higher impact
+        verify( """
+                🟡 FILE*/sub/Word.docx
+                text contains the stuff
+                ➖➖
+                """,
+                corpus.getPassages("contained fufu contains deutsch contains ", 3));
+
+        // verify that queries with only stopwords give no results
+        verify("", corpus.getPassages("der die das and or the", 100));
     }
 
 

@@ -94,6 +94,10 @@ tasks.register('fatJar', Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+clean {
+    delete file('bin')
+}
+
 test {
     useJUnitPlatform()
 }
