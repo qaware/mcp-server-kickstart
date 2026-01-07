@@ -5,8 +5,11 @@ import com.qaware.mcp.McpTool;
 import com.qaware.mcp.tools.Config;
 
 /*
-set mcp_kb_max_content=2000
 cd /D R:\codebase\_MISC\_PSBOM
+
+set MCP_KB_MAX_CONTENT=3000
+set MCP_KB_ROOT=R:/codebase/_MISC/_PSBOM
+set MCP_SLURP_ROOT=C:/Viechtbauer/Zeugs/Docs/Maya/Ixlu
 jmcp com.qaware.mcp.Server com.qaware.mcp.tools.knowledge.McpKnowledgeTool com.qaware.mcp.tools.knowledge.McpSlurpTool
 
 touch C:\Users\JörgViechtbauer\AppData\Local\github-copilot\intellij\mcp.json

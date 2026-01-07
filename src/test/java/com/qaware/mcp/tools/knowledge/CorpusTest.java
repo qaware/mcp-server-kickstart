@@ -20,8 +20,8 @@ class CorpusTest {
         // then
         verify( """
                 🟡 FILE*/Text.txt
-                Das ist ein anderes Dokument im Test.
-                Hier kommt noch ganz viel mehr Text hinzu, um es länger
+                Ein Dokument auf Deutsch.
+                Es kommt noch etwas Fülltext dazu, um es ein bisschen länger
                 ➖➖
                 
                 🟡 FILE*/sub/Word.docx
@@ -30,19 +30,21 @@ class CorpusTest {
                  | Some more text. | Cell
                  | Row 2a | Row 2b
                 ➖➖
-                """, corpus.getAll());
+                """,
+                corpus.getAll());
 
         // and
         verify( """
                 🟡 FILE*/Text.txt
-                anderes Dokument im Test.
-                Hier kommt noch ganz viel mehr Text hinzu, um es länger
+                Dokument auf Deutsch.
+                Es kommt noch etwas Fülltext dazu, um es ein bisschen länger
                 ➖➖
                 
                 🟡 FILE*/sub/Word.docx
                 text contains the stuff
-                ➖➖                
-                """, corpus.getPassages("der ist the a -#Dökumenten!. _CONTaININg's", 15));
+                ➖➖               
+                """,
+                corpus.getPassages("contained der ist the a -#Dökumenten!. _CONTaININg's", 12));
     }
 
 

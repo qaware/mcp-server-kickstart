@@ -1,3 +1,3 @@
-Das ist ein anderes Dokument im Test.
-Hier kommt noch ganz viel mehr Text hinzu, um es länger zu machen.
+Ein Dokument auf Deutsch.
+Es kommt noch etwas Fülltext dazu, um es ein bisschen länger zu machen.
 
