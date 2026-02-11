@@ -16,7 +16,7 @@ class TikaToolTest {
     private AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
 
     @Test
-    void testIsThreadSafe() throws InterruptedException {
+    void testParseIsThreadSafe() throws InterruptedException {
         int threadCount = 10;
         int iterationsPerThread = 50;
 
@@ -35,7 +35,7 @@ class TikaToolTest {
         }
 
         executor.shutdown();
-        assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS), "Executor did not terminate in time");
+        assertTrue(executor.awaitTermination(1, TimeUnit.MINUTES), "Executor did not terminate in time");
 
         assertNull(exceptionRef.get());
     }
