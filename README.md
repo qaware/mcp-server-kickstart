@@ -438,15 +438,15 @@ Location:
             ],
             "env": {
                 "MCP_KB_MAX_CONTENT": "3000",
-                "MCP_KB_ROOT": "<YOUR KNOWLEDGEBASE1>;<YOUR KNOWLEDGEBASE2>",
-                "MCP_SLURP_ROOT": "<YOUR SLURP DATA PATH1>;<YOUR SLURP DATA PATH2>"
+                "MCP_KB_ROOT": "<YOUR KNOWLEDGEBASE1>;<YOUR KNOWLEDGEBASE2>"
+                // MCP_SLURP_ROOT is deprecated for the slurp tool; provide slurp paths as tool arguments instead
             }
         }
     }
 }
 ```
 
-This configuration ensures that the server starts with the `McpKnowledgeTool` and `McpSlurpTool` enabled, using the specified environment variables for knowledge base and slurp data paths.
+This configuration ensures that the server starts with the `McpKnowledgeTool` and `McpSlurpTool` enabled, using the specified environment variables for the knowledge base and passing slurp data paths as tool arguments.
 
 ### Using Streaming Transport with Knowledge and Slurp Tools
 
@@ -458,8 +458,8 @@ In case you want to start the server manually, you first need to configure the e
     - `MCP_KB_MAX_CONTENT`: Defines the token budget for non stop word tokens. Approximately 2x `MCP_KB_MAX_CONTENT` tokens will be sent. Adjust this value as needed.
 
 #### Slurp Configuration
-- **Environment Variables**:
-    - `MCP_SLURP_ROOT`: Specifies the directories for slurp data, separated by `;`.
+- **Tool Argument**:
+    - The `McpSlurpTool` no longer reads slurp roots from an environment variable. Instead, provide the slurp path(s) as an argument to the tool when starting the server. The tool accepts a single path or a semicolon-separated list of paths (e.g. `C:\data\docs;D:\more_docs`).
 
 The `slurp` tool imports all supported documents into the LLM. Be cautious when processing large amounts of data.
 

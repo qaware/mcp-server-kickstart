@@ -22,6 +22,10 @@ class CorpusTest {
                 Ein Dokument auf Deutsch.
                 Es kommt noch etwas Fülltext dazu, um es ein bisschen länger
                 ➖➖
+                
+                🟡 FILE*/sub/HelloWorld.pdf
+                Hello World
+                ➖➖
 
                 🟡 FILE*/sub/Word.docx
                 # Hello from corpus test file one.

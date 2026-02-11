@@ -191,14 +191,10 @@ enum TikaTool {
      * @throws RuntimeException when parsing fails
      */
     static String parse(InputStream inputStream) {
-        try {
+        try (inputStream) {
             ContentHandler contentHandler = new MarkupContentHandler();
 
-            try (inputStream) {
-                AutoDetectParser autoDetectParser = new AutoDetectParser(tikaConfig);
-
-                autoDetectParser.parse(inputStream, contentHandler, new Metadata(), new ParseContext());
-            }
+            new AutoDetectParser(tikaConfig).parse(inputStream, contentHandler, new Metadata(), new ParseContext());
 
             return contentHandler.toString().trim().replaceAll("\n\n\n+", "\n\n"); // could be optimized, but fine for now
 
