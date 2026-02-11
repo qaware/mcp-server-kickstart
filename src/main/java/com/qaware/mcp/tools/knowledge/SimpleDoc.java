@@ -15,16 +15,15 @@ class SimpleDoc {
     private final IntIntHashMap lastPos = new IntIntHashMap();
     private final IntArrayList previous = new IntArrayList();
 
-    /*XXX*/ float[] scores;
-
-    private final Dictionary dictionary; // XXX das kann eigentlich weg, stattdesen nur mit Hashes arbeiten
+    private final Dictionary dictionary;
 
     private final long lastMod;
 
     private final CharSequence source;
-    private final IntArrayList beginEnd = new IntArrayList(); // XXX das ist Mist!!! zwei Arrays besser
+    private final IntArrayList beginEnd = new IntArrayList();
     private final IntArrayList tokenIds = new IntArrayList();
 
+    float[] scores;
 
     public SimpleDoc(long aLastMod, Dictionary aDictionary, Tokens tokens) {
         lastMod    = aLastMod;

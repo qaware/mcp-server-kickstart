@@ -1,18 +1,18 @@
 package com.qaware.mcp;
 
-import io.modelcontextprotocol.server.McpServer;
+import static io.modelcontextprotocol.server.McpServer.sync;
+
+import java.lang.reflect.Method;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.server.McpStatelessSyncServer;
 import io.modelcontextprotocol.server.transport.HttpServletStatelessServerTransport;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
 import jakarta.servlet.Servlet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.Method;
-import java.util.Map;
-
-import static io.modelcontextprotocol.server.McpServer.sync;
 
 // yeah, lots of code duplication between McpSseServlet and McpStreamingServlet because there are no common interfaces
 

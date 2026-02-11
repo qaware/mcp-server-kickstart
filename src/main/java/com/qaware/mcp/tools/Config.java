@@ -23,7 +23,6 @@ public enum Config {
 
     public static final String MAX_CONTENT = "mcp-kb-max-content";
     public static final String ROOT = "mcp-kb-root";
-    public static final String SLURP_ROOT = "mcp-slurp-root";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Config.class);
 

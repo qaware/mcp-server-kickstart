@@ -1,13 +1,12 @@
 package com.qaware.mcp.tools.knowledge;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 class CorpusTest {
 
@@ -23,11 +22,12 @@ class CorpusTest {
                 Ein Dokument auf Deutsch.
                 Es kommt noch etwas Fülltext dazu, um es ein bisschen länger
                 ➖➖
-                
+
                 🟡 FILE*/sub/Word.docx
                 # Hello from corpus test file one.
-                This text contains the stuff that should be found by the Corpus test.
-                 | Some more text. | Cell
+
+                This text contains the stuff that should be found by the *Corpus* test.
+                 | Some more **text**. | Cell
                  | Row 2a | Row 2b
                 ➖➖
                 """,
@@ -39,7 +39,7 @@ class CorpusTest {
                 Dokument auf Deutsch.
                 Es kommt noch etwas Fülltext dazu, um es ein bisschen länger
                 ➖➖
-                
+
                 🟡 FILE*/sub/Word.docx
                 text contains the stuff
                 ➖➖

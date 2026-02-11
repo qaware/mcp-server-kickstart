@@ -6,6 +6,7 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.ByteArrayInputStream;
@@ -16,9 +17,9 @@ import java.util.Locale;
 import java.util.Map;
 
 /*
-jmcp com.qaware.mcp.tools.knowledge.TikaTool C:/Viechtbauer/Zeugs/Docs/QAware/AIR/SystemhandbuchAirBMW.docx
 jmcp com.qaware.mcp.tools.knowledge.TikaTool C:\Viechtbauer\Zeugs\Docs\QAware\_Vorträge\2025-11-06-KnowledgeDB-MCP.pptx
  */
+
 /**
  * Utility for extracting textual content from common office/document formats using Apache Tika.
  *
@@ -42,15 +43,32 @@ enum TikaTool {
     //XXX
 
 
-    private static final Map<String, String> TAGS = Map.of(
-            "p", "\n",
-            "tr", "\n",
-            "td", " | ",
-            "h1", "\n\n# ",
-            "h2", "\n\n## ",
-            "h3", "\n\n### ",
-            "h4", "\n\n#### ",
-            "h5", "\n\n##### "
+    private static final Map<String, String> START = Map.of(
+        "b", "**",
+        "i", "*",
+
+        "p", "\n",
+
+        "tr", "\n",
+        "td", " | ",
+
+        "h1", "\n\n# ",
+        "h2", "\n\n## ",
+        "h3", "\n\n### ",
+        "h4", "\n\n#### ",
+        "h5", "\n\n##### "
+    );
+
+
+    private static final Map<String, String> END = Map.of(
+        "b", "**",
+        "i", "*",
+
+        "h1", "\n\n",
+        "h2", "\n\n",
+        "h3", "\n\n",
+        "h4", "\n\n",
+        "h5", "\n\n"
     );
 
 
@@ -61,42 +79,42 @@ enum TikaTool {
         String xmlConfig =
             """
             <?xml version="1.0" encoding="UTF-8"?>
-            
+
             <!--
               Minimal Tika config that only registers a small, safe set of parsers.
               Purpose: ensure no external binaries or external parsers (Tesseract, ExternalParser/LibreOffice, ...)
               are used.
             -->
-            
+
             <properties>
               <!-- Only include parsers implemented in pure Java and commonly safe -->
               <parsers>
                 <!-- plain text -->
                 <parser class="org.apache.tika.parser.txt.TXTParser"/>
-            
+
                 <!-- PDF (Apache PDFBox) -->
                 <parser class="org.apache.tika.parser.pdf.PDFParser"/>
-            
+
                 <!-- Microsoft OOXML (docx, xlsx, pptx) -->
                 <parser class="org.apache.tika.parser.microsoft.ooxml.OOXMLParser"/>
-            
+
                 <!-- Legacy Microsoft Office (doc, xls, ppt) via Apache POI (pure Java) -->
                 <parser class="org.apache.tika.parser.microsoft.OfficeParser"/>
-            
+
                 <!-- RTF -->
                 <parser class="org.apache.tika.parser.rtf.RTFParser"/>
-            
+
                 <!-- XML/HTML -->
                 <parser class="org.apache.tika.parser.xml.XMLParser"/>
                 <parser class="org.apache.tika.parser.html.HtmlParser"/>
-            
+
                 <!-- EPUB -->
                 <parser class="org.apache.tika.parser.epub.EpubParser"/>
-            
+
                 <!-- Generic composite parser fallback (keeps behavior conservative because we've enumerated allowed parsers) -->
                 <parser class="org.apache.tika.parser.CompositeParser"/>
               </parsers>
-            
+
               <!-- Do not register external parsers or OCR parsers here (Tesseract, ExternalParser, etc.) -->
               <!-- We intentionally leave detectors and other extensions at defaults. -->
             </properties>
@@ -121,7 +139,15 @@ enum TikaTool {
 
             if ("p".equals(name) && !stringBuilder.isEmpty() && stringBuilder.charAt(stringBuilder.length() - 1) == ' ') return;
 
-            stringBuilder.append(TAGS.getOrDefault(name, ""));
+            stringBuilder.append(START.getOrDefault(name, ""));
+        }
+
+
+        @Override
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+            String name = localName == null ? qName : localName;
+
+            stringBuilder.append(END.getOrDefault(name, ""));
         }
 
 
