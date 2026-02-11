@@ -42,11 +42,10 @@ class TikaToolTest {
 
 
     private void verify(String path, int expected) {
-        try {
-            InputStream inputStream =
-                    Objects.requireNonNull(
-                            TikaToolTest.class.getClassLoader().getResourceAsStream(path),
-                            "Test resource not found on classpath: " + path);
+        try (InputStream inputStream =
+                     Objects.requireNonNull(
+                             TikaToolTest.class.getClassLoader().getResourceAsStream(path),
+                             "Not found on classpath: " + path)) {
 
             assertEquals(expected, TikaTool.parse(inputStream).hashCode(), path);
 
