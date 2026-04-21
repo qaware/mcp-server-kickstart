@@ -16,7 +16,8 @@ This tool retrieves relevant text passages (not full docs) from a local knowledg
 **Flow:**
 Files → Tokenize → SimpleDoc → Query → Score → Smooth → Threshold → Passages
 
-**Date:** 2026-01-03  
+**Date:** 2026-01-03
+
 **Scope:** This document explains the design decisions behind the local “knowledge base” retrieval implementation under `com.qaware.mcp.tools.knowledge` (especially `McpKnowledgeTool`, `SimpleDoc`, `Dictionary`, and the NLP pipeline in `Linguistic`). It is written as an engineering rationale: it records *why* the system is built this way, what alternatives were considered, and why they were rejected.
 
 The intent is to make the system maintainable, tunable, and defensible even though it favors simplicity, locality, and performance over “state of the art” RAG architectures.

@@ -78,6 +78,8 @@ public class McpSourceTool {
         String url = map.get(name);
         if (url == null) throw new FileNotFoundException("Could not find the source for: " + name);
 
+        LOGGER.debug("Serving source from '{}'", url);
+
         return readString(url);
     }
 
@@ -137,7 +139,7 @@ public class McpSourceTool {
     private void visitZip(Path path) {
         LOGGER.info("Inspecting '{}'", path);
 
-        String urlBase = "jar:" + toURL(path)  + "!/";
+        String urlBase = "jar:" + toURL(path) + "!/";
 
         try (ZipFile zipFile = new ZipFile(path.toFile(), StandardCharsets.UTF_8)) {
             zipFile.stream()

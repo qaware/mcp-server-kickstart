@@ -10,16 +10,15 @@ import java.util.function.BiFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.modelcontextprotocol.json.McpJsonMapper;
-import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
+import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult.Builder;
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Utility methods for MCP tools. */
 enum McpTools {
@@ -27,7 +26,7 @@ enum McpTools {
     ;
 
 
-    static final McpJsonMapper MCP_JSON_MAPPER = new JacksonMcpJsonMapper(new ObjectMapper());
+    static final McpJsonMapper MCP_JSON_MAPPER = new JacksonMcpJsonMapper(JsonMapper.shared());
 
 
     static final McpSchema.ServerCapabilities SERVER_CAPABILITIES = McpSchema.ServerCapabilities.builder()

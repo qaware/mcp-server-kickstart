@@ -15,7 +15,7 @@ C:\Viechtbauer\Zeugs\Docs\QAware\AIR
 set MCP_KB_ROOT=R:/codebase/_MISC/_PSBOM;C:\Viechtbauer\Zeugs\Labs\Python\confluence
 set MCP_KB_MAX_CONTENT=6000
 
-jmcp com.qaware.mcp.Server com.qaware.mcp.tools.knowledge.McpKnowledgeTool com.qaware.mcp.tools.knowledge.McpSlurpTool
+jmcp com.qaware.mcp.Server com.qaware.mcp.tools.McpSourceTool com.qaware.mcp.tools.knowledge.McpKnowledgeTool com.qaware.mcp.tools.knowledge.McpSlurpTool
 
 touch C:\Users\JörgViechtbauer\AppData\Local\github-copilot\intellij\mcp.json
 
