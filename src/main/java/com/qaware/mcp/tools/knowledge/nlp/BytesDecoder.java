@@ -1,5 +1,8 @@
 package com.qaware.mcp.tools.knowledge.nlp;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -16,6 +19,8 @@ import java.util.Objects;
  * <p><b>Note:</b> This class is not thread-safe. Each thread must use its own instance.</p>
  */
 public class BytesDecoder implements CharSequence {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BytesDecoder.class);
 
     /**
      * The factor used to determine when to reallocate the internal buffer.
@@ -45,7 +50,9 @@ public class BytesDecoder implements CharSequence {
      * @param charset the charset to use for decoding
      */
     public BytesDecoder(Charset charset) {
-        charsetDecoder = charset.newDecoder();
+        charsetDecoder = charset.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPLACE)
+                .onUnmappableCharacter(CodingErrorAction.REPLACE);
     }
 
 
@@ -150,7 +157,7 @@ public class BytesDecoder implements CharSequence {
             try {
                 coderResult.throwException();
             } catch (CharacterCodingException cce) {
-                throw new UncheckedIOException(cce);
+                LOGGER.warn("Decoding error occurred: {}", cce.toString());
             }
         }
     }

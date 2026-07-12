@@ -24,11 +24,11 @@ without the hassle of dealing with Jetty configuration, JSON handling, or reflec
 
 This server supports **three MCP transport modes**:
 
-| Transport | Flag | Recommended For |
-|----------|------|------------------|
+| Transport               | Flag                         | Recommended For                        |
+|-------------------------|------------------------------|----------------------------------------|
 | **Streaming (default)** | *(no flag)* or `--streaming` | GitHub Copilot (IntelliJ), Claude Code |
-| **SSE** | `--sse` | Codeium / KiloCode |
-| **STDIO** | `--stdio` | Claude Desktop, Cline |
+| **SSE**                 | `--sse`                      | Codeium / KiloCode                     |
+| **STDIO**               | `--stdio`                    | Claude Desktop, Cline                  |
 
 If no flag is specified, the server runs in **Streaming mode**.
 

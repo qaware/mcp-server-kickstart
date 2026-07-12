@@ -9,10 +9,12 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
@@ -151,8 +153,8 @@ public class McpSourceTool {
 
                 String url = urlBase + normalizePath(fullPath);
 
-                map.put(normalizeName(fileName), url);
-                map.put(normalizeName(fullPath), url);
+                put(fileName, url);
+                put(fullPath, url);
 
                 LOGGER.trace("Found '{}'", fullPath);
             });
@@ -160,6 +162,21 @@ public class McpSourceTool {
         } catch (IOException ioe) {
             LOGGER.warn("Failed to process zip {}", path, ioe);
         }
+    }
+
+
+    private void put(String name, String url) {
+        name = normalizeName(name);
+        String old = map.put(name, url);
+        if (old != null && getVersion(old).compareTo(getVersion(url)) > 0) map.put(name, old);
+    }
+
+
+    private static String getVersion(String urlBase) {
+        String rawVersion = urlBase.replaceAll(".*-([-0-9._]+(?:[-.][A-Za-z0-9_]++))-sources.jar.*", "$1");
+        return Arrays.stream(rawVersion.split("\\.", -1))
+            .map(part -> String.format("%4s", part))
+            .collect(Collectors.joining("."));
     }
 
 

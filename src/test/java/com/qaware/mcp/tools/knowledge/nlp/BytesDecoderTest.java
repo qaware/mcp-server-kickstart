@@ -1,12 +1,10 @@
 package com.qaware.mcp.tools.knowledge.nlp;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 class BytesDecoderTest {
 
@@ -23,12 +21,11 @@ class BytesDecoderTest {
 
 
     @Test
-    void testError() {
-        RuntimeException rte = assertThrows(RuntimeException.class, () -> bytesDecoder.reset((byte) -127));
+    void testIllegalBytes() {
+        bytesDecoder.reset((byte) 'h', (byte) -127, (byte) 'i', (byte) -127);
 
-        assertEquals("java.nio.charset.MalformedInputException: Input length = 1", rte.getCause().toString());
+        assertEquals("h�i�", bytesDecoder.toString());
     }
-
 
     private void testIntern() {
         bytesDecoder.reset(TEST_STRING.getBytes(StandardCharsets.UTF_8));

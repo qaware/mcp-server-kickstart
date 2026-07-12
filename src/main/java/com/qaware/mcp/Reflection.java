@@ -99,6 +99,7 @@ enum Reflection {
 
         try {
             return method.invoke(instance, args);
+
         } catch (Exception e) {
 
             if (e instanceof InterruptedException) {
