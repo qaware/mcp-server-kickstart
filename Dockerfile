@@ -1,5 +1,5 @@
 # Multi-stage build for smaller final image
-FROM gradle:8.14.2-jdk17 AS builder
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
